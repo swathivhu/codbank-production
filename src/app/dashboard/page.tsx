@@ -218,7 +218,7 @@ export default function DashboardPage() {
   const fullName = profile?.displayName || user.email || 'CodBank User';
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-body overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground font-body overflow-hidden animate-page-entry">
       <DashboardNav />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -235,14 +235,14 @@ export default function DashboardPage() {
               <Input placeholder="Search records..." className="pl-12 w-64 bg-background border-white/5 h-10 rounded-xl focus-visible:ring-accent/20" />
             </div>
 
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-accent">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-accent transition-transform active:scale-90">
               <Bell className="w-5 h-5" />
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all outline-none">
-                  <div className="h-8 w-8 rounded-lg overflow-hidden border border-white/10">
+                <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all outline-none active:scale-95 group">
+                  <div className="h-8 w-8 rounded-lg overflow-hidden border border-white/10 group-hover:border-accent/40 transition-colors">
                     <img src={`https://picsum.photos/seed/${user.uid}/200/200`} alt="Profile" className="w-full h-full object-cover" />
                   </div>
                   <div className="text-left hidden sm:block">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
           
           {/* Summary Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="glass-card rounded-[1.5rem] border-white/5 shadow-xl hover:shadow-accent/5 transition-all">
+            <Card className="glass-card rounded-[1.5rem]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total Balance</CardTitle>
                 <Wallet className="h-4 w-4 text-accent" />
@@ -290,14 +290,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-accent">+2.4% from last week</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-accent/10 text-accent" onClick={handleCheckBalance}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-accent/10 text-accent transition-transform hover:rotate-12" onClick={handleCheckBalance}>
                     <Zap className="h-3 w-3" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="glass-card rounded-[1.5rem] border-white/5 shadow-xl hover:shadow-accent/5 transition-all">
+            <Card className="glass-card rounded-[1.5rem]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Active Accounts</CardTitle>
                 <Activity className="h-4 w-4 text-accent" />
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                 <div className="text-3xl font-headline font-black mb-1">{accounts?.length || 0}</div>
                 <Dialog open={isCreateDialogOpen} onOpenChange={(open) => !open ? closeCreateDialog() : setIsCreateDialogOpen(true)}>
                   <DialogTrigger asChild>
-                    <button className="text-xs font-bold text-accent hover:underline flex items-center gap-1">
+                    <button className="text-xs font-bold text-accent hover:underline flex items-center gap-1 transition-all hover:gap-2">
                       <Plus className="w-3 h-3" /> Open new vault
                     </button>
                   </DialogTrigger>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                         </DialogFooter>
                       </>
                     ) : (
-                      <div className="py-12 flex flex-col items-center text-center space-y-8">
+                      <div className="py-12 flex flex-col items-center text-center space-y-8 animate-page-entry">
                         <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 shadow-[0_0_50px_rgba(92,214,193,0.2)]">
                           <CheckCircle2 className="w-12 h-12 text-accent" />
                         </div>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                           <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60 font-black">Account Identifier</p>
                           <div className="flex items-center justify-center gap-6">
                             <span className="text-4xl font-mono font-black tracking-widest text-accent">{createdAccountNumber}</span>
-                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-accent/10 hover:text-accent" onClick={() => { navigator.clipboard.writeText(createdAccountNumber!); toast({ title: "Copied", description: "Account ID saved." }); }}>
+                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-accent/10 hover:text-accent transition-transform active:scale-90" onClick={() => { navigator.clipboard.writeText(createdAccountNumber!); toast({ title: "Copied", description: "Account ID saved." }); }}>
                               <Copy className="w-6 h-6" />
                             </Button>
                           </div>
@@ -375,7 +375,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="glass-card rounded-[1.5rem] border-white/5 shadow-xl hover:shadow-accent/5 transition-all">
+            <Card className="glass-card rounded-[1.5rem]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Portfolio Value</CardTitle>
                 <TrendingUp className="h-4 w-4 text-accent" />
@@ -390,7 +390,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Analytics Chart Row */}
-          <Card className="glass-card rounded-[2rem] border-white/5 shadow-xl p-8">
+          <Card className="glass-card rounded-[2rem] p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <div>
                 <h3 className="text-xl font-headline font-black">Wealth Growth</h3>
@@ -398,7 +398,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-2">
                 {['D', 'W', 'M', 'Y', 'ALL'].map((p) => (
-                  <Button key={p} variant="ghost" size="sm" className={cn("text-[10px] font-black h-8 w-10 p-0 rounded-lg", p === 'W' ? "bg-accent/10 text-accent" : "text-muted-foreground")}>
+                  <Button key={p} variant="ghost" size="sm" className={cn("text-[10px] font-black h-8 w-10 p-0 rounded-lg transition-all active:scale-90", p === 'W' ? "bg-accent/10 text-accent" : "text-muted-foreground")}>
                     {p}
                   </Button>
                 ))}
@@ -441,11 +441,11 @@ export default function DashboardPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-headline font-black">Recent Activity</h3>
-              <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10 rounded-full font-black text-xs px-4">
+              <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10 rounded-full font-black text-xs px-4 transition-all active:scale-95">
                 View Ledger
               </Button>
             </div>
-            <Card className="glass-card rounded-[1.5rem] border-white/5 shadow-xl overflow-hidden">
+            <Card className="glass-card rounded-[1.5rem] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
@@ -461,7 +461,7 @@ export default function DashboardPage() {
                       <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer">
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", tx.type === 'credit' ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive")}>
+                            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110", tx.type === 'credit' ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive")}>
                               {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                             </div>
                             <p className="font-black text-sm tracking-tight">{tx.description}</p>

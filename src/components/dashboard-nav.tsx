@@ -34,16 +34,19 @@ const NavItem = ({ icon, label, href, active }: NavItemProps) => (
   <Link 
     href={href} 
     className={cn(
-      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-bold text-sm",
+      "group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-bold text-sm relative overflow-hidden",
       active 
         ? "bg-accent/10 text-accent border border-accent/20 shadow-[0_0_20px_rgba(92,214,193,0.05)]" 
-        : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+        : "text-muted-foreground hover:bg-white/5 hover:text-foreground active:scale-95"
     )}
   >
-    <div className={cn("transition-colors", active ? "text-accent" : "text-muted-foreground/60")}>
+    <div className={cn("transition-all duration-300", active ? "text-accent" : "text-muted-foreground/60 group-hover:scale-110 group-hover:text-accent")}>
       {icon}
     </div>
     <span>{label}</span>
+    {!active && (
+      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-accent/40 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 ease-out" />
+    )}
   </Link>
 );
 
@@ -74,7 +77,7 @@ export function DashboardNav() {
     <div className="flex flex-col h-full bg-card/40 backdrop-blur-3xl border-r border-white/5 p-6 w-72 hidden lg:flex">
       <div className="flex items-center gap-3 mb-10 px-2">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="bg-accent p-2 rounded-xl group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(92,214,193,0.3)]">
+          <div className="bg-accent p-2 rounded-xl group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(92,214,193,0.3)] group-hover:shadow-[0_0_30px_rgba(92,214,193,0.5)]">
             <ShieldCheck className="w-5 h-5 text-background" />
           </div>
           <span className="text-xl font-black font-headline tracking-tighter">CodBank</span>
@@ -113,9 +116,9 @@ export function DashboardNav() {
       <div className="pt-6 border-t border-white/5">
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-all font-black text-sm"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-all font-black text-sm active:scale-95"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           <span>Terminate Session</span>
         </button>
       </div>

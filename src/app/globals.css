@@ -32,19 +32,36 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground selection:bg-accent/30 selection:text-accent font-body;
+    @apply bg-background text-foreground selection:bg-accent/30 selection:text-accent font-body antialiased;
     background-image: radial-gradient(circle at 50% -20%, hsl(222, 47%, 12%), transparent 70%);
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-white/5 shadow-2xl;
+    @apply bg-card/40 backdrop-blur-xl border border-white/5 shadow-2xl transition-all duration-300;
+  }
+  .glass-card:hover {
+    @apply -translate-y-1 border-white/10 shadow-accent/5;
   }
   .heading-xl {
     @apply text-4xl md:text-6xl font-headline font-bold tracking-tight leading-[1.1];
   }
   .subtext {
     @apply text-muted-foreground text-sm md:text-base leading-relaxed;
+  }
+  .animate-page-entry {
+    animation: page-entry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes page-entry {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
