@@ -20,7 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useFirebase } from '@/firebase';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { cn } from '@/lib/utils';
 
 const CHART_DATA = [
   { month: 'Jan', value: 45000 },
@@ -42,14 +43,17 @@ const chartConfig = {
 export default function InvestingPage() {
   const { user, isUserLoading } = useFirebase();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
+  // Prevent hydration issues by not rendering chart content on the server
+  if (!mounted || isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-accent animate-spin" />
@@ -128,33 +132,39 @@ export default function InvestingPage() {
               </div>
             </div>
             <div className="h-[350px] w-full">
-              <ChartContainer config={chartConfig}>
-                <AreaChart data={CHART_DATA}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 'bold'}}
-                  />
-                  <YAxis hide />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="hsl(var(--accent))" 
-                    strokeWidth={4}
-                    fillOpacity={1} 
-                    fill="url(#colorValue)" 
-                  />
-                </AreaChart>
-              </ChartContainer>
+              {mounted ? (
+                <ChartContainer config={chartConfig}>
+                  <AreaChart data={CHART_DATA}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis 
+                      dataKey="month" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 'bold'}}
+                    />
+                    <YAxis hide />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="hsl(var(--accent))" 
+                      strokeWidth={4}
+                      fillOpacity={1} 
+                      fill="url(#colorValue)" 
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-white/5 rounded-xl border border-dashed border-white/10 text-muted-foreground text-xs font-bold">
+                  Initializing Chart Data...
+                </div>
+              )}
             </div>
           </Card>
 
