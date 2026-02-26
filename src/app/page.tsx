@@ -86,10 +86,10 @@ export default function Home() {
                 <Link 
                   key={i} 
                   href={item.href}
-                  className="p-10 rounded-[2rem] bg-card border border-white/5 hover:border-accent/40 transition-all duration-500 group relative overflow-hidden"
+                  className="p-10 rounded-[2.5rem] bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg hover:scale-105 hover:shadow-[0_20px_50px_rgba(92,214,193,0.2)] transition-all duration-300 group relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="mb-8 p-4 bg-accent/5 rounded-2xl w-fit group-hover:scale-110 transition-transform duration-500">
+                  <div className="mb-8 p-5 bg-accent/10 rounded-2xl w-fit group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-500 shadow-inner">
                     {item.icon}
                   </div>
                   <h3 className="text-2xl font-headline font-bold mb-4 flex items-center justify-between">
