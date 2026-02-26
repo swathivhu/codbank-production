@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "CodUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CodUser",
+      "type": "object",
+      "description": "Represents a user account within the CodBank banking application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CodUser entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique username for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Unique email address of the user.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user in the system (e.g., CUSTOMER)."
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current account balance of the user."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "role",
+        "balance"
+      ]
+    },
+    "UserToken": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserToken",
+      "type": "object",
+      "description": "Represents an authentication token associated with a user, typically for refresh tokens.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserToken entity."
+        },
+        "token": {
+          "type": "string",
+          "description": "The authentication token string itself."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to CodUser. (Relationship: CodUser 1:N UserToken)"
+        },
+        "expiry": {
+          "type": "string",
+          "description": "Timestamp indicating when the token expires.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "token",
+        "userId",
+        "expiry"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/codusers/{codUserId}",
+        "definition": {
+          "entityName": "CodUser",
+          "schema": {
+            "$ref": "#/backend/entities/CodUser"
+          },
+          "description": "Stores individual user profiles and their banking information. The document ID (`{codUserId}`) must match the Firebase Authentication UID of the user. Includes the 'role' field for database-backed access control. Only the owning user can access their own profile. Includes denormalized 'balance' and 'role' for efficient access."
+        }
+      },
+      {
+        "path": "/codusers/{codUserId}/userTokens/{userTokenId}",
+        "definition": {
+          "entityName": "UserToken",
+          "schema": {
+            "$ref": "#/backend/entities/UserToken"
+          },
+          "description": "Stores authentication tokens (e.g., refresh tokens) for a specific user. This is a subcollection, with ownership inherited from the parent `/codusers/{codUserId}` document. The '{codUserId}' parameter ensures authorization independence by implicitly denormalizing the owner's ID into the path. Only the owning user can manage their tokens.",
+          "params": [
+            {
+              "name": "codUserId",
+              "description": "The unique identifier of the CodUser who owns these tokens. Must match request.auth.uid."
+            },
+            {
+              "name": "userTokenId",
+              "description": "The unique identifier for a specific user token."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL):**\n1.  **CodUser Entity:** User documents are stored at `/codusers/{codUserId}`. The document ID (`{codUserId}`) will directly correspond to the Firebase Authentication `request.auth.uid`. This structure inherently provides authorization independence because a security rule can directly compare `request.auth.uid` with the `{codUserId}` wildcard in the path. There is no need for a `get()` call to a parent or associated document to determine ownership or permissions, making access checks atomic and performant.\n2.  **UserToken Entity:** User tokens are stored in a subcollection at `/codusers/{codUserId}/userTokens/{userTokenId}`. By embedding `UserToken` documents within a specific user's path, the parent `codUserId` from the path context (which matches `request.auth.uid`) implicitly defines ownership for all `UserToken` documents within that subcollection. Again, this eliminates the need for `get()` operations to check `userId` from a separate `CodUser` document, ensuring authorization independence and enabling atomic creation and deletion of user and token data.\n\n**QAPs (Rules are not Filters):**\n1.  **CodUser Entity:** For retrieving a user's own profile, a client queries `doc('/codusers/' + request.auth.uid)`. This is a direct, point-in-time access, which is fully QAP-compliant. While a `list` operation on the top-level `/codusers` collection would generally be disallowed or heavily restricted (e.g., to an admin role defined in a separate `roles_admin` collection, though not explicitly required for this app's features), direct individual document reads are secure and efficient.\n2.  **UserToken Entity:** By structuring `UserToken` as a subcollection under `/codusers/{codUserId}`, any `list` operation performed within `/codusers/{codUserId}/userTokens` will automatically be scoped to tokens belonging to the authenticated user (`request.auth.uid`). Security rules will enforce that `{codUserId}` matches `request.auth.uid`. This means that any successful `list` query will *only* return documents owned by the querying user, thus preventing the 'rules are not filters' problem. The rules do not need to filter results; the structural segregation combined with path-based authorization inherently ensures that all returned documents meet the security criteria.\n\n**Structural Segregation & Access Modeling:**\n*   **Private Data:** Both `CodUser` and `UserToken` data are highly private and user-specific. The chosen path structure `/codusers/{codUserId}` and `/codusers/{codUserId}/userTokens/{userTokenId}` perfectly aligns with the mandate to prefer path-based ownership for private, user-owned data, making security rules simple and clear.\n*   **DBAC:** User roles are stored directly in the `CodUser` document's `role` field. For permissions based on this role, rules can simply read `resource.data.role` from the user's own document. If global administrative roles were needed, a dedicated collection like `/roles_admin/{uid}` would be created, following the 'existence over content' principle.\n\nThis design leverages Firestore's hierarchical nature to define clear ownership and access boundaries, minimizing complexity in security rules and maximizing performance and debuggability."
+  }
+}

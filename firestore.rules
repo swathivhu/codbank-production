@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CodBank Security Rules
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict user-ownership model designed for a secure banking application. 
+     * Access is primarily governed by path-based authorization where a user's UID must match 
+     * the document path to grant access.
+     *
+     * DATA STRUCTURE:
+     * - /codusers/{codUserId}: Root collection for user profiles and balances.
+     * - /codusers/{codUserId}/userTokens/{tokenId}: Subcollection for authentication/refresh tokens.
+     *
+     * KEY SECURITY DECISIONS:
+     * - Authorization Independence: By using the Firebase UID as the document ID for users, we 
+     *   eliminate the need for costly cross-document lookups (get() calls) for basic ownership checks.
+     * - No Public Listing: User profiles and tokens are strictly private. The 'list' operation 
+     *   is restricted to the owner to prevent data scraping or enumeration.
+     * - Relational Integrity: On document creation, the rules enforce that internal ID fields 
+     *   (like 'id' or 'userId') match the authenticated user's UID to prevent spoofing.
+     * - Prototyping Flexibility: While authorization is strictly enforced, the rules do not 
+     *   validate the specific schema of non-relational fields (e.g., balance, phone) to allow 
+     *   for rapid development.
+     */
+
+    // --- Global Helper Functions ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the provided userId matches the authenticated user's UID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Combined check for ownership and document existence for updates/deletes. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the user profile collection. Enforces that users can only manage their own data.
+     * @path /codusers/{codUserId}
+     * @allow (create) if auth.uid is 'user123' and codUserId is 'user123'.
+     * @deny (read) if auth.uid is 'user123' but requested path is '/codusers/user456'.
+     * @principle Path-based ownership and self-creation enforcement.
+     */
+    match /codusers/{codUserId} {
+      allow get, list: if isOwner(codUserId);
+      
+      allow create: if isOwner(codUserId) && request.resource.data.id == codUserId;
+      
+      allow update: if isExistingOwner(codUserId) && request.resource.data.id == resource.data.id;
+      
+      allow delete: if isExistingOwner(codUserId);
+
+      /**
+       * @description Rules for authentication tokens. Access is inherited from the parent user's identity.
+       * @path /codusers/{codUserId}/userTokens/{userTokenId}
+       * @allow (list) if auth.uid is 'user123' and path is '/codusers/user123/userTokens'.
+       * @deny (create) if auth.uid is 'user123' but request.resource.data.userId is 'attacker456'.
+       * @principle Structural segregation ensures that listing tokens only returns the owner's data.
+       */
+      match /userTokens/{userTokenId} {
+        allow get, list: if isOwner(codUserId);
+        
+        allow create: if isOwner(codUserId) && request.resource.data.userId == codUserId;
+        
+        allow update: if isExistingOwner(codUserId) && request.resource.data.userId == resource.data.userId;
+        
+        allow delete: if isExistingOwner(codUserId);
+      }
+    }
+
+  }
+}
