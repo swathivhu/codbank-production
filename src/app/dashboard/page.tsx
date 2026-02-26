@@ -1,23 +1,122 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardNav } from '@/components/dashboard-nav';
-import { MOCK_ACCOUNTS, MOCK_TRANSACTIONS, MOCK_USER } from '@/lib/mock-data';
+import { MOCK_TRANSACTIONS } from '@/lib/mock-data';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
-  CreditCard, 
   TrendingUp, 
   Search, 
   Bell,
   Plus,
   MoreVertical,
-  Filter
+  Filter,
+  Wallet,
+  Loader2,
+  RefreshCw,
+  Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useFirebase, useUser } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import confetti from 'canvas-confetti';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
+  const { user, isUserLoading } = useUser();
+  const { firestore } = useFirebase();
+  const router = useRouter();
+  const { toast } = useToast();
+  
+  const [balance, setBalance] = useState<number | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  // Initial fetch of profile
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+      return;
+    }
+
+    const fetchInitialData = async () => {
+      if (user && firestore) {
+        try {
+          const docRef = doc(firestore, 'codusers', user.uid);
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            setProfile(snap.data());
+            setBalance(snap.data().balance);
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+      }
+    };
+
+    fetchInitialData();
+  }, [user, isUserLoading, firestore, router]);
+
+  const handleCheckBalance = async () => {
+    if (!user || !firestore) return;
+    
+    setIsFetching(true);
+    try {
+      // Simulate API call delay for "modern" feel
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const docRef = doc(firestore, 'codusers', user.uid);
+      const snap = await getDoc(docRef);
+      
+      if (snap.exists()) {
+        const newBalance = snap.data().balance;
+        setBalance(newBalance);
+        
+        // Celebration!
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#5cd6c1', '#1a3a4a', '#ffffff'],
+          ticks: 200,
+          zIndex: 1000
+        });
+
+        toast({
+          title: "Balance Updated",
+          description: `Your current balance is $${newBalance.toLocaleString()}.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch balance. Please try again.",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const firstName = profile?.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+
   return (
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <DashboardNav />
@@ -25,8 +124,8 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto p-6 lg:p-10">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold font-headline mb-1">Good morning, {MOCK_USER.name.split(' ')[0]}</h1>
-            <p className="text-muted-foreground">Manage your finances and transactions effortlessly.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1">Welcome back, {firstName}</h1>
+            <p className="text-muted-foreground">Your financial overview is looking solid today.</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative hidden md:block">
@@ -37,38 +136,71 @@ export default function DashboardPage() {
               <Bell className="w-5 h-5" />
             </Button>
             <div className="h-10 w-10 rounded-full overflow-hidden border border-accent/20">
-              <img src="https://picsum.photos/seed/codbank-avatar/100/100" alt="Avatar" />
+              <img src={`https://picsum.photos/seed/${user.uid}/100/100`} alt="Avatar" />
             </div>
           </div>
         </header>
 
         {/* Account Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          {MOCK_ACCOUNTS.map((acc) => (
-            <Card key={acc.id} className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center mb-2">
-                  <Badge variant="secondary" className="bg-primary/20 text-accent border-none">{acc.type}</Badge>
-                  <MoreVertical className="w-4 h-4 text-muted-foreground cursor-pointer" />
+          <Card className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative col-span-1 md:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center mb-2">
+                <Badge variant="secondary" className="bg-primary/20 text-accent border-none">Main Account</Badge>
+                <Wallet className="w-4 h-4 text-accent" />
+              </div>
+              <CardTitle className="text-4xl font-headline font-bold flex items-baseline gap-2">
+                {balance !== null ? (
+                  `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                ) : (
+                  <span className="text-muted-foreground/30">••••••</span>
+                )}
+              </CardTitle>
+              <CardDescription className="font-mono text-xs tracking-widest uppercase">
+                Active Balance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  onClick={handleCheckBalance} 
+                  disabled={isFetching}
+                  className="flex-1 bg-accent hover:bg-accent/90 text-background font-bold shadow-[0_0_15px_rgba(92,214,193,0.3)]"
+                >
+                  {isFetching ? (
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Trophy className="w-4 h-4 mr-2" />
+                  )}
+                  Check Balance
+                </Button>
+                <Button variant="outline" className="flex-1 border-white/10 hover:bg-white/5">
+                  Transfer
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card className="bg-card border-white/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-headline">Monthly Spending</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-4">$3,240.00</div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                  <span>Limit: $5,000.00</span>
+                  <span className="text-accent">65%</span>
                 </div>
-                <CardTitle className="text-3xl font-headline font-bold">
-                  ${acc.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </CardTitle>
-                <CardDescription className="font-mono text-xs">{acc.accountNumber}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2 mt-4">
-                  <Button size="sm" className="flex-1 bg-accent hover:bg-accent/90 text-background font-semibold">
-                    Send
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 border-white/10 hover:bg-white/5">
-                    Deposit
-                  </Button>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-accent w-[65%] rounded-full"></div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 hover:border-accent/20 transition-all cursor-pointer group">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Plus className="w-6 h-6 text-accent" />
@@ -138,37 +270,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick Insights / Profile Sidebar */}
+          {/* Sidebar Insights */}
           <div className="space-y-6">
-            <h2 className="text-xl font-bold font-headline">Quick Actions</h2>
-            <Card className="bg-primary/10 border-accent/10">
-              <CardHeader>
-                <CardTitle className="text-lg font-headline">Safe Spending</CardTitle>
-                <CardDescription>Your current spending limit is $5,000/mo.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                    <span>Used</span>
-                    <span className="text-accent">$3,240.00</span>
-                  </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-accent w-[65%] rounded-full shadow-[0_0_10px_rgba(92,214,193,0.5)]"></div>
-                  </div>
-                </div>
-                <Button className="w-full border border-accent/20 bg-accent/10 text-accent hover:bg-accent/20">
-                  Adjust Limit
-                </Button>
-              </CardContent>
-            </Card>
-
+            <h2 className="text-xl font-bold font-headline">Insights</h2>
             <div className="bg-card border border-white/5 p-6 rounded-2xl">
               <h3 className="font-headline font-bold mb-4 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-accent" />
-                Savings Insight
+                Savings Progress
               </h3>
               <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                You've saved <span className="text-accent font-bold">$450.00</span> more this month compared to February. Great progress!
+                You've saved <span className="text-accent font-bold">$450.00</span> more this month compared to February. You're in the top 5% of savers!
               </p>
               <div className="p-4 rounded-xl bg-background/50 border border-white/5">
                 <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-tighter">Projected Balance (Dec)</p>
