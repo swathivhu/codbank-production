@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -12,18 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-
-/**
- * Simple client-side SHA-256 hashing for the prototype requirement.
- * In production, sensitive password handling is usually managed entirely by Firebase Auth.
- */
-async function hashPassword(password: string) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+import bcrypt from 'bcryptjs';
 
 export default function RegisterPage() {
   const { auth, firestore } = useFirebase();
@@ -48,11 +38,21 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Basic validation
     if (!formData.email || !formData.password || !formData.username) {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (Email, Password, Username).",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Weak Password",
+        description: "Password must be at least 6 characters long.",
       });
       return;
     }
@@ -60,44 +60,49 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // 1. Hash the password for the Firestore profile storage requirement
-      const hashedPassword = await hashPassword(formData.password);
+      // 1. Hash the password with bcrypt (10 rounds) as requested
+      // Using bcryptjs for client-side compatibility
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(formData.password, salt);
 
       // 2. Create the user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
 
       // 3. Create the profile document in Firestore
-      // Note: The document ID matches the Auth UID as per security rule requirements
+      // Document ID matches the Auth UID as per security requirements in firestore.rules
       await setDoc(doc(firestore, 'codusers', user.uid), {
-        id: user.uid, // Required by current firestore.rules
+        id: user.uid, // Required for 'create' rule validation
         userId: user.uid,
         username: formData.username,
         email: formData.email,
-        password: hashedPassword,
+        password: hashedPassword, // Storing hashed version for profile record
         phone: formData.phone || '',
-        role: 'CUSTOMER',
-        balance: 100000,
+        role: 'CUSTOMER', // Role is always CUSTOMER during registration
+        balance: 100000, // Default balance as requested
         createdAt: serverTimestamp(),
         displayName: `${formData.firstName} ${formData.lastName}`.trim(),
       });
 
       toast({
-        title: "Account Created",
-        description: "Welcome to CodBank! Your secure account is ready.",
+        title: "Registration Successful",
+        description: "Your secure account has been created. Please log in to continue.",
       });
 
-      router.push('/dashboard');
+      // 4. Sign out the user (Firebase auto-logs in after creation)
+      // and redirect to login page as requested
+      await signOut(auth);
+      router.push('/login');
     } catch (error: any) {
       console.error('Registration error:', error);
       let message = "An unexpected error occurred. Please try again.";
       
       if (error.code === 'auth/email-already-in-use') {
         message = "This email is already registered. Please try logging in.";
-      } else if (error.code === 'auth/weak-password') {
-        message = "Password is too weak. Please use at least 6 characters.";
       } else if (error.code === 'auth/invalid-email') {
         message = "Please enter a valid email address.";
+      } else if (error.code === 'permission-denied') {
+        message = "You do not have permission to create this profile.";
       }
 
       toast({
@@ -157,7 +162,7 @@ export default function RegisterPage() {
                     <Input 
                       id="firstName" 
                       placeholder="Alex" 
-                      className="bg-background/50" 
+                      className="bg-background/50 border-white/10" 
                       value={formData.firstName}
                       onChange={handleInputChange}
                     />
@@ -167,22 +172,35 @@ export default function RegisterPage() {
                     <Input 
                       id="lastName" 
                       placeholder="Pierce" 
-                      className="bg-background/50" 
+                      className="bg-background/50 border-white/10" 
                       value={formData.lastName}
                       onChange={handleInputChange}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input 
-                    id="username" 
-                    placeholder="alexpierce" 
-                    className="bg-background/50" 
-                    required
-                    value={formData.username}
-                    onChange={handleInputChange}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input 
+                      id="username" 
+                      placeholder="alexpierce" 
+                      className="bg-background/50 border-white/10" 
+                      required
+                      value={formData.username}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      type="tel"
+                      placeholder="+1 (555) 000-0000" 
+                      className="bg-background/50 border-white/10" 
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
@@ -190,7 +208,7 @@ export default function RegisterPage() {
                     id="email" 
                     type="email" 
                     placeholder="alex@codbank.com" 
-                    className="bg-background/50" 
+                    className="bg-background/50 border-white/10" 
                     required
                     value={formData.email}
                     onChange={handleInputChange}
@@ -201,20 +219,22 @@ export default function RegisterPage() {
                   <Input 
                     id="password" 
                     type="password" 
-                    className="bg-background/50" 
+                    className="bg-background/50 border-white/10" 
                     required
                     value={formData.password}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div className="flex items-start gap-2 pt-2">
-                  <div className="mt-1 h-4 w-4 rounded border border-white/20 bg-background/50 flex items-center justify-center">
-                    <input type="checkbox" className="opacity-0 absolute h-4 w-4 cursor-pointer" required />
-                    <div className="w-2 h-2 bg-accent rounded-sm hidden peer-checked:block"></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
+                  <input 
+                    type="checkbox" 
+                    id="terms" 
+                    className="mt-1 h-4 w-4 rounded border-white/20 bg-background/50 cursor-pointer accent-accent" 
+                    required 
+                  />
+                  <Label htmlFor="terms" className="text-xs text-muted-foreground font-normal leading-tight">
                     I agree to the <Link href="#" className="text-accent hover:underline">Terms of Service</Link> and <Link href="#" className="text-accent hover:underline">Privacy Policy</Link>.
-                  </p>
+                  </Label>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
