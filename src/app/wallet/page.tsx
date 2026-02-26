@@ -50,7 +50,7 @@ export default function WalletPage() {
             setBalance(snap.data().balance);
           }
         } catch (error) {
-          toast({ variant: "destructive", title: "Sync Error", description: "Failed to fetch vault balance." });
+          toast({ variant: "destructive", title: "Sync Error", description: "Ledger access failed." });
         } finally {
           setIsLoadingBalance(false);
         }
@@ -67,7 +67,7 @@ export default function WalletPage() {
     const newBalance = balance + amount;
 
     if (newBalance < 0) {
-      toast({ variant: "destructive", title: "Insufficient Funds", description: "Your vault cannot drop below $0.00." });
+      toast({ variant: "destructive", title: "Insufficient Funds", description: "Vault floor is $0.00." });
       return;
     }
 
@@ -77,22 +77,22 @@ export default function WalletPage() {
       setBalance(newBalance);
       
       if (type === 'deposit') {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#5cd6c1', '#1a3a4a'] });
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#5cd6c1', '#ffffff'] });
       }
 
       toast({
-        title: type === 'deposit' ? "Deposit Confirmed" : "Withdrawal Successful",
-        description: `Your balance has been updated to $${newBalance.toLocaleString()}.`,
+        title: type === 'deposit' ? "Deposit Confirmed" : "Withdrawal Success",
+        description: `Ledger updated: $${newBalance.toLocaleString()}.`,
       });
     } catch (error) {
-      toast({ variant: "destructive", title: "Security Alert", description: "Transaction could not be authorized." });
+      toast({ variant: "destructive", title: "Security Alert", description: "Operation unauthorized." });
     }
   };
 
   if (isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
       </div>
     );
   }
@@ -103,106 +103,104 @@ export default function WalletPage() {
     <div className="flex min-h-screen bg-background text-foreground font-body">
       <DashboardNav />
       
-      <main className="flex-1 overflow-auto p-6 lg:p-10">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold font-headline mb-1 tracking-tight">Digital Wallet</h1>
-          <p className="text-muted-foreground text-sm">Securely manage your fluid assets and daily transactions.</p>
+      <main className="flex-1 overflow-auto p-6 lg:p-12">
+        <header className="mb-12">
+          <h1 className="text-4xl font-black font-headline mb-2 tracking-tight">Digital Wallet</h1>
+          <p className="text-muted-foreground font-medium">Real-time liquidity and transaction management.</p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          <Card className="lg:col-span-2 bg-card border-white/5 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -mr-32 -mt-32 blur-[100px]"></div>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center mb-4">
-                <Badge className="bg-accent/10 text-accent border-none font-bold">Active Wallet</Badge>
-                <ShieldCheck className="w-5 h-5 text-accent/50" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
+          <Card className="glass-card lg:col-span-2 relative overflow-hidden rounded-[2.5rem]">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full -mr-40 -mt-40 blur-[120px]"></div>
+            <CardHeader className="p-10">
+              <div className="flex justify-between items-center mb-6">
+                <Badge className="bg-accent/10 text-accent border-none font-black tracking-widest px-4 uppercase text-[10px]">Primary Asset</Badge>
+                <ShieldCheck className="w-6 h-6 text-accent" />
               </div>
-              <CardTitle className="text-6xl font-headline font-bold tracking-tight py-4">
+              <CardTitle className="text-7xl font-headline font-black tracking-tighter py-6">
                 {balance !== null ? `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••'}
               </CardTitle>
-              <CardDescription className="font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-muted-foreground/60">
-                Primary Secure Ledger
+              <CardDescription className="font-mono text-[10px] tracking-[0.4em] uppercase font-black text-muted-foreground/60">
+                Active Secure Ledger
               </CardDescription>
             </CardHeader>
-            <CardContent className="mt-6 flex flex-wrap gap-4">
+            <CardContent className="px-10 pb-10 flex flex-wrap gap-6">
               <Button 
                 onClick={() => handleTransaction('deposit')}
-                className="bg-accent hover:bg-accent/90 text-background font-black h-14 px-8 shadow-[0_0_20px_rgba(92,214,193,0.2)]"
+                className="bg-accent hover:bg-accent/90 text-background font-black h-16 px-10 rounded-2xl shadow-2xl text-lg"
               >
-                <Plus className="w-5 h-5 mr-2" /> Quick Deposit ($500)
+                <Plus className="w-6 h-6 mr-3" /> Quick Deposit ($500)
               </Button>
               <Button 
                 onClick={() => handleTransaction('withdraw')}
                 variant="outline"
-                className="border-white/10 hover:bg-white/5 font-black h-14 px-8"
+                className="border-white/10 hover:bg-white/5 font-black h-16 px-10 rounded-2xl text-lg"
               >
-                <Minus className="w-5 h-5 mr-2" /> Withdraw ($500)
+                <Minus className="w-6 h-6 mr-3" /> Instant Withdraw ($500)
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-white/5 p-6 flex flex-col justify-center shadow-2xl">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
-                <Zap className="w-6 h-6 text-accent" />
+          <Card className="glass-card p-10 flex flex-col justify-center rounded-[2.5rem]">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="w-16 h-16 rounded-[1.5rem] bg-accent/10 flex items-center justify-center">
+                <Zap className="w-8 h-8 text-accent" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Rewards Points</p>
-                <p className="text-2xl font-headline font-bold">12,450 pts</p>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Loyalty Tier</p>
+                <p className="text-3xl font-headline font-black">Platinum</p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              You've earned <span className="text-accent font-bold">450 points</span> this week through digital transactions.
+            <p className="text-lg text-muted-foreground leading-relaxed mb-8 font-medium">
+              You've generated <span className="text-accent font-black">450 points</span> from card-not-present transactions this cycle.
             </p>
-            <Button variant="secondary" className="w-full bg-white/5 hover:bg-white/10 border-none font-bold">
+            <Button variant="secondary" className="w-full bg-white/5 hover:bg-white/10 border-none font-black h-14 rounded-2xl">
               Redeem Rewards
             </Button>
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold font-headline tracking-tight flex items-center gap-2">
-              <History className="w-6 h-6 text-accent" /> Recent Activity
+        <div className="space-y-8">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-3xl font-black font-headline tracking-tight flex items-center gap-4">
+              <History className="w-8 h-8 text-accent" /> Ledger Activity
             </h2>
-            <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10 rounded-full font-bold">
-              Full Statement
-            </Button>
+            <Button variant="ghost" className="text-accent hover:bg-accent/10 rounded-full font-black px-6">Export CSV</Button>
           </div>
-          <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="glass-card rounded-[2.5rem] overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-white/5 text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-black">
-                  <th className="px-6 py-5">Source</th>
-                  <th className="px-6 py-5">Category</th>
-                  <th className="px-6 py-5">Status</th>
-                  <th className="px-6 py-5 text-right">Value</th>
+                <tr className="border-b border-white/5 text-muted-foreground text-[10px] uppercase tracking-[0.3em] font-black">
+                  <th className="px-10 py-8">Origin / Entity</th>
+                  <th className="px-10 py-8">Classification</th>
+                  <th className="px-10 py-8">Status</th>
+                  <th className="px-10 py-8 text-right">Value</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {MOCK_TRANSACTIONS.map((tx) => (
                   <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-6">
                         <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center",
+                          "w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner",
                           tx.type === 'credit' ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
                         )}>
-                          {tx.type === 'credit' ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                          {tx.type === 'credit' ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
                         </div>
-                        <p className="font-bold text-sm tracking-tight">{tx.description}</p>
+                        <p className="font-black text-base tracking-tight">{tx.description}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <Badge variant="outline" className="text-[9px] bg-white/5 border-none h-5 px-2 font-black uppercase text-muted-foreground/80">{tx.category}</Badge>
+                    <td className="px-10 py-8">
+                      <Badge variant="outline" className="text-[10px] border-white/5 bg-white/5 h-6 px-3 font-black uppercase tracking-widest text-muted-foreground">{tx.category}</Badge>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-accent">
-                        <div className="w-1.5 h-1.5 rounded-full bg-accent"></div> COMPLETED
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-2.5 text-[10px] font-black text-accent tracking-widest">
+                        <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_10px_rgba(92,214,193,0.5)]"></div> SETTLED
                       </div>
                     </td>
                     <td className={cn(
-                      "px-6 py-5 text-right font-black text-sm tracking-tight",
+                      "px-10 py-8 text-right font-black text-lg tracking-tight",
                       tx.type === 'credit' ? "text-accent" : "text-foreground"
                     )}>
                       {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}

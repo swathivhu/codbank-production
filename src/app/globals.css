@@ -4,31 +4,26 @@
 
 @layer base {
   :root {
-    --background: 195 15% 10%;
-    --foreground: 0 0% 98%;
-    --card: 195 15% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 195 15% 12%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 200 50% 30%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 195 15% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 195 15% 18%;
-    --muted-foreground: 200 10% 65%;
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
     --accent: 170 60% 60%;
-    --accent-foreground: 195 15% 10%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 195 15% 20%;
-    --input: 195 15% 20%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
     --ring: 170 60% 60%;
-    --radius: 0.75rem;
-    --chart-1: 200 50% 30%;
-    --chart-2: 170 60% 60%;
-    --chart-3: 195 15% 40%;
-    --chart-4: 170 40% 50%;
-    --chart-5: 200 30% 20%;
+    --radius: 1rem;
   }
 }
 
@@ -37,6 +32,19 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground selection:bg-accent/30 selection:text-accent font-body;
+    background-image: radial-gradient(circle at 50% -20%, hsl(222, 47%, 12%), transparent 70%);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+  .heading-xl {
+    @apply text-4xl md:text-6xl font-headline font-bold tracking-tight leading-[1.1];
+  }
+  .subtext {
+    @apply text-muted-foreground text-sm md:text-base leading-relaxed;
   }
 }

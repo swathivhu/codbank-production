@@ -1,23 +1,23 @@
 import Link from 'next/link';
-import { ShieldCheck, ArrowRight, Wallet, Lock, TrendingUp, Globe } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Wallet, Lock, TrendingUp, Globe, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const features = [
     { 
-      icon: <Wallet className="w-8 h-8 text-accent" />, 
+      icon: <Wallet className="w-10 h-10 text-accent" />, 
       title: "Digital Wallet", 
       desc: "Instant payments and seamless transfers with zero hidden fees.",
       href: "/wallet"
     },
     { 
-      icon: <TrendingUp className="w-8 h-8 text-accent" />, 
+      icon: <TrendingUp className="w-10 h-10 text-accent" />, 
       title: "Smart Investing", 
       desc: "Automated portfolios built by industry leading AI and financial experts.",
       href: "/investing"
     },
     { 
-      icon: <Globe className="w-8 h-8 text-accent" />, 
+      icon: <Globe className="w-10 h-10 text-accent" />, 
       title: "Global Access", 
       desc: "Spend and withdraw in any currency with real-time mid-market rates.",
       href: "/global"
@@ -26,105 +26,116 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-6 lg:px-12 h-20 flex items-center border-b bg-background/50 backdrop-blur-md sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="bg-primary p-1.5 rounded-lg">
-            <ShieldCheck className="w-6 h-6 text-accent" />
+      <header className="px-6 lg:px-12 h-24 flex items-center border-b border-white/5 bg-background/50 backdrop-blur-md sticky top-0 z-50">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="bg-accent p-2 rounded-xl">
+            <ShieldCheck className="w-7 h-7 text-background" />
           </div>
-          <span className="text-xl font-bold font-headline tracking-tight">CodBank</span>
+          <span className="text-2xl font-bold font-headline tracking-tight">CodBank</span>
         </Link>
-        <nav className="ml-auto flex gap-6 sm:gap-10">
-          <Link className="text-sm font-medium hover:text-accent transition-colors" href="#features">Features</Link>
-          <Link className="text-sm font-medium hover:text-accent transition-colors" href="#security">Security</Link>
-          <Link className="text-sm font-medium hover:text-accent transition-colors" href="/login">Login</Link>
-          <Button asChild size="sm" className="bg-accent hover:bg-accent/90 text-background font-semibold">
-            <Link href="/register">Open Account</Link>
+        <nav className="ml-auto flex items-center gap-8">
+          <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="#features">Features</Link>
+          <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="#security">Security</Link>
+          <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="/login">Login</Link>
+          <Button asChild className="bg-accent hover:bg-accent/90 text-background font-black rounded-xl px-6">
+            <Link href="/register">Join Now</Link>
           </Button>
         </nav>
       </header>
+
       <main className="flex-1">
-        <section className="py-24 px-6 lg:px-12 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background">
-          <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-8">
+        <section className="relative py-32 px-6 lg:px-12 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full bg-[radial-gradient(circle_at_50%_0%,rgba(92,214,193,0.1),transparent_50%)]"></div>
+          
+          <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-bold mb-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
               </span>
-              Now serving over 2M+ customers globally
+              TRUSTED BY 2M+ USERS GLOBALLY
             </div>
-            <h1 className="text-5xl md:text-7xl font-headline font-bold mb-6 tracking-tight max-w-4xl">
-              The Digital Era of <span className="text-accent">Secure Banking</span> is Here
+            
+            <h1 className="text-6xl md:text-8xl font-headline font-bold mb-8 tracking-tighter leading-[1] max-w-5xl">
+              Future of <span className="text-accent italic">Secure</span> Digital Banking
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl font-body leading-relaxed">
-              CodBank combines enterprise-grade security with a modern interface to give you total control over your financial future.
+            
+            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl font-body leading-relaxed">
+              CodBank integrates institutional-grade security with an intuitive interface, giving you absolute control over your global assets.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md">
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-background font-bold text-lg h-14">
-                <Link href="/register">Get Started <ArrowRight className="ml-2 w-5 h-5" /></Link>
+            
+            <div className="flex flex-col sm:flex-row gap-6 w-full justify-center max-w-xl">
+              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-background font-black text-xl h-16 rounded-2xl px-10 shadow-[0_0_30px_rgba(92,214,193,0.2)]">
+                <Link href="/register">Get Started Now <ArrowRight className="ml-2 w-6 h-6" /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-primary/50 text-primary-foreground hover:bg-primary/10 h-14 cursor-pointer">
-                <Link href="/dashboard">View Demo</Link>
+              <Button asChild variant="outline" size="lg" className="border-white/10 text-foreground hover:bg-white/5 h-16 rounded-2xl px-10 text-lg font-bold">
+                <Link href="/dashboard">View Live Demo</Link>
               </Button>
             </div>
           </div>
         </section>
 
-        <section id="features" className="py-24 px-6 lg:px-12 border-t border-white/5">
+        <section id="features" className="py-24 px-6 lg:px-12 bg-black/20">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-headline font-bold mb-4">Smarter Financial Tools</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">Everything you need to manage, save, and grow your wealth in one place.</p>
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl font-headline font-bold mb-6">Built for Modern Wealth</h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Comprehensive tools designed to help you manage, scale, and secure your financial portfolio.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {features.map((item, i) => (
                 <Link 
                   key={i} 
                   href={item.href}
-                  className="p-8 rounded-2xl bg-card border border-white/5 hover:border-accent/20 transition-all group cursor-pointer hover:shadow-2xl hover:shadow-accent/5"
+                  className="p-10 rounded-[2rem] bg-card border border-white/5 hover:border-accent/40 transition-all duration-500 group relative overflow-hidden"
                 >
-                  <div className="mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <h3 className="text-xl font-headline font-bold mb-3 flex items-center gap-2">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="mb-8 p-4 bg-accent/5 rounded-2xl w-fit group-hover:scale-110 transition-transform duration-500">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-2xl font-headline font-bold mb-4 flex items-center justify-between">
                     {item.title}
-                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-accent" />
+                    <ChevronRight className="w-6 h-6 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-accent" />
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
+                  <p className="text-muted-foreground leading-relaxed text-lg">{item.desc}</p>
                 </Link>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="security" className="py-24 px-6 lg:px-12 bg-primary/5 border-t border-white/5">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1">
-              <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8">
-                <Lock className="w-8 h-8 text-accent" />
+        <section id="security" className="py-32 px-6 lg:px-12 relative">
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-24">
+            <div className="flex-1 space-y-10">
+              <div className="inline-block p-4 bg-accent/10 rounded-3xl">
+                <Lock className="w-10 h-10 text-accent" />
               </div>
-              <h2 className="text-3xl md:text-4xl font-headline font-bold mb-6">Security is Not an Afterthought</h2>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                We use bank-grade 256-bit AES encryption, biometric authentication, and multi-factor authorization to ensure your funds and data are always protected.
+              <h2 className="text-5xl md:text-6xl font-headline font-bold tracking-tight">Zero-Trust Architecture</h2>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                We leverage hardware-level encryption and real-time biometric verification to ensure your identity and assets remain untouchable.
               </p>
-              <ul className="space-y-4">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
-                  "Biometric Login (FaceID & TouchID)",
-                  "Instant Fraud Protection Alerts",
-                  "Secure Multi-Signer Approvals",
-                  "24/7 Priority Security Support"
+                  "Biometric Multi-Factor Auth",
+                  "256-bit AES Vault Encryption",
+                  "AI-Powered Fraud Detection",
+                  "Instant Asset Freeze Capability"
                 ].map((text, i) => (
-                  <li key={i} className="flex items-center gap-3 text-primary-foreground font-medium">
-                    <ShieldCheck className="w-5 h-5 text-accent" />
+                  <li key={i} className="flex items-center gap-4 text-lg font-bold">
+                    <div className="bg-accent/20 p-1.5 rounded-full">
+                      <ShieldCheck className="w-5 h-5 text-accent" />
+                    </div>
                     {text}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="flex-1 relative">
-              <div className="absolute inset-0 bg-accent/20 blur-[100px] -z-10 rounded-full"></div>
-              <div className="bg-card border border-white/10 p-4 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="flex-1 relative group">
+              <div className="absolute inset-0 bg-accent/10 blur-[120px] rounded-full group-hover:bg-accent/20 transition-all duration-700"></div>
+              <div className="relative p-2 bg-gradient-to-br from-white/10 to-transparent rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden">
                 <img 
-                  src="https://picsum.photos/seed/codbank-security-ui/800/600" 
-                  alt="Secure Dashboard Interface" 
-                  className="rounded-2xl"
+                  src="https://picsum.photos/seed/codbank-security-ui/1000/800" 
+                  alt="Secure Dashboard" 
+                  className="rounded-[2rem] w-full object-cover"
                   data-ai-hint="security dashboard"
                 />
               </div>
@@ -132,17 +143,20 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className="py-12 px-6 lg:px-12 border-t border-white/5 bg-background">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-accent" />
-            <span className="text-lg font-bold font-headline tracking-tight">CodBank</span>
+
+      <footer className="py-20 px-6 lg:px-12 border-t border-white/5 bg-black/40">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex items-center gap-3">
+            <div className="bg-accent p-1.5 rounded-lg">
+              <ShieldCheck className="w-5 h-5 text-background" />
+            </div>
+            <span className="text-2xl font-bold font-headline tracking-tight">CodBank</span>
           </div>
-          <p className="text-muted-foreground text-sm">© 2024 CodBank Financial Services. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="#" className="text-sm text-muted-foreground hover:text-accent">Terms</Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-accent">Privacy</Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-accent">Compliance</Link>
+          <p className="text-muted-foreground font-medium text-sm">© 2024 CodBank Financial. All rights reserved.</p>
+          <div className="flex gap-10">
+            <Link href="#" className="text-sm font-bold text-muted-foreground hover:text-accent transition-colors">Privacy</Link>
+            <Link href="#" className="text-sm font-bold text-muted-foreground hover:text-accent transition-colors">Security</Link>
+            <Link href="#" className="text-sm font-bold text-muted-foreground hover:text-accent transition-colors">Legal</Link>
           </div>
         </div>
       </footer>
