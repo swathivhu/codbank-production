@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -58,16 +57,12 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    // 1. Hash the password with bcrypt (10 rounds)
     bcrypt.genSalt(10)
       .then(salt => bcrypt.hash(formData.password, salt))
       .then(hashedPassword => {
-        // 2. Create the user in Firebase Auth (Non-blocking flow)
         return createUserWithEmailAndPassword(auth, formData.email, formData.password)
           .then(userCredential => {
             const user = userCredential.user;
-
-            // 3. Create the profile document in Firestore (Non-blocking)
             const profileData = {
               id: user.uid,
               userId: user.uid,
@@ -82,13 +77,7 @@ export default function RegisterPage() {
             };
 
             setDocumentNonBlocking(doc(firestore, 'codusers', user.uid), profileData, { merge: true });
-
-            toast({
-              title: "Registration Successful",
-              description: "Your secure account has been created. Redirecting to login...",
-            });
-
-            // 4. Sign out and redirect
+            toast({ title: "Registration Successful", description: "Your secure account has been created." });
             return signOut(auth).then(() => {
               router.push('/login');
             });
@@ -96,21 +85,9 @@ export default function RegisterPage() {
       })
       .catch((error: any) => {
         setIsLoading(false);
-        let message = "An unexpected error occurred. Please try again.";
-        
-        if (error.code === 'auth/email-already-in-use') {
-          message = "This email is already registered. Please try logging in.";
-        } else if (error.code === 'auth/invalid-email') {
-          message = "Please enter a valid email address.";
-        } else if (error.code === 'permission-denied') {
-          message = "You do not have permission to create this profile.";
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Registration Failed",
-          description: message,
-        });
+        let message = "An unexpected error occurred.";
+        if (error.code === 'auth/email-already-in-use') message = "This email is already registered.";
+        toast({ variant: "destructive", title: "Registration Failed", description: message });
       });
   };
 
@@ -124,135 +101,66 @@ export default function RegisterPage() {
       </header>
       
       <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="hidden lg:block space-y-8">
-            <h1 className="text-4xl font-bold font-headline tracking-tight leading-tight">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="hidden lg:block space-y-10">
+            <h1 className="text-5xl font-black font-headline tracking-tighter leading-tight">
               Join <span className="text-accent">CodBank</span> today and take control of your wealth.
             </h1>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {[
-                { title: "No Hidden Fees", desc: "We believe in transparency. What you see is what you get." },
-                { title: "Enterprise Security", desc: "Bank-grade encryption and real-time monitoring." },
-                { title: "Instant Setup", desc: "Open an account in under 3 minutes with digital verification." }
+                { title: "No Hidden Fees", desc: "Transparency is our protocol. No unexpected charges." },
+                { title: "Enterprise Security", desc: "Hardware-level encryption for your digital assets." },
+                { title: "Instant Deployment", desc: "Activate your global vault in under 3 minutes." }
               ].map((item, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="bg-accent/10 p-1 h-fit rounded-full">
-                    <CheckCircle2 className="w-5 h-5 text-accent" />
+                <div key={i} className="flex gap-6 items-start">
+                  <div className="bg-accent/10 p-2 h-fit rounded-2xl">
+                    <CheckCircle2 className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-headline font-bold text-lg">{item.title}</h3>
-                    <p className="text-muted-foreground text-sm">{item.desc}</p>
+                    <h3 className="font-headline font-black text-xl mb-1">{item.title}</h3>
+                    <p className="text-muted-foreground font-medium text-base">{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <Card className="border-white/5 bg-card/50 backdrop-blur-xl">
+          <Card className="border-white/5 bg-card/50 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-2xl">
             <form onSubmit={handleRegister}>
-              <CardHeader>
-                <CardTitle className="font-headline">Create Your Account</CardTitle>
-                <CardDescription>Start your financial journey with us</CardDescription>
+              <CardHeader className="p-10 pb-6">
+                <CardTitle className="font-headline text-3xl font-black tracking-tight">Create Account</CardTitle>
+                <CardDescription className="text-base">Join the future of institutional-grade banking.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 p-10 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input 
-                      id="firstName" 
-                      placeholder="Alex" 
-                      className="bg-background/50 border-white/10" 
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                    />
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">First Name</Label>
+                    <Input id="firstName" placeholder="Alex" className="bg-background/50 border-white/10 h-12 rounded-xl" value={formData.firstName} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input 
-                      id="lastName" 
-                      placeholder="Pierce" 
-                      className="bg-background/50 border-white/10" 
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input 
-                      id="username" 
-                      placeholder="alexpierce" 
-                      className="bg-background/50 border-white/10" 
-                      required
-                      value={formData.username}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input 
-                      id="phone" 
-                      type="tel"
-                      placeholder="+1 (555) 000-0000" 
-                      className="bg-background/50 border-white/10" 
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                    />
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Last Name</Label>
+                    <Input id="lastName" placeholder="Pierce" className="bg-background/50 border-white/10 h-12 rounded-xl" value={formData.lastName} onChange={handleInputChange} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="alex@codbank.com" 
-                    className="bg-background/50 border-white/10" 
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
+                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Username</Label>
+                  <Input id="username" placeholder="alexpierce" className="bg-background/50 border-white/10 h-12 rounded-xl" required value={formData.username} onChange={handleInputChange} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    className="bg-background/50 border-white/10" 
-                    required
-                    value={formData.password}
-                    onChange={handleInputChange}
-                  />
+                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
+                  <Input id="email" type="email" placeholder="alex@codbank.com" className="bg-background/50 border-white/10 h-12 rounded-xl" required value={formData.email} onChange={handleInputChange} />
                 </div>
-                <div className="flex items-start gap-2 pt-2">
-                  <input 
-                    type="checkbox" 
-                    id="terms" 
-                    className="mt-1 h-4 w-4 rounded border-white/20 bg-background/50 cursor-pointer accent-accent" 
-                    required 
-                  />
-                  <Label htmlFor="terms" className="text-xs text-muted-foreground font-normal leading-tight">
-                    I agree to the <Link href="#" className="text-accent hover:underline">Terms of Service</Link> and <Link href="#" className="text-accent hover:underline">Privacy Policy</Link>.
-                  </Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Secure Password</Label>
+                  <Input id="password" type="password" className="bg-background/50 border-white/10 h-12 rounded-xl" required value={formData.password} onChange={handleInputChange} />
                 </div>
               </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Account...
-                    </>
-                  ) : (
-                    "Create Secure Account"
-                  )}
+              <CardFooter className="flex flex-col gap-6 p-10">
+                <Button type="submit" className="w-full h-16 text-xl shadow-2xl" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : "Deploy Secure Account"}
                 </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account? <Link href="/login" className="text-accent hover:underline font-medium">Log in</Link>
+                <p className="text-center text-sm text-muted-foreground font-medium">
+                  Already a member? <Link href="/login" className="text-accent hover:underline font-bold">Log in to vault</Link>
                 </p>
               </CardFooter>
             </form>

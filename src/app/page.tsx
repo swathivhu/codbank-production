@@ -37,7 +37,7 @@ export default function Home() {
           <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="#features">Features</Link>
           <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="#security">Security</Link>
           <Link className="text-sm font-semibold text-muted-foreground hover:text-accent transition-all" href="/login">Login</Link>
-          <Button asChild className="bg-accent hover:bg-accent/90 text-background font-black rounded-xl px-6">
+          <Button asChild variant="default" className="px-6">
             <Link href="/register">Join Now</Link>
           </Button>
         </nav>
@@ -65,10 +65,10 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 w-full justify-center max-w-xl">
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-background font-black text-xl h-16 rounded-2xl px-10 shadow-[0_0_30px_rgba(92,214,193,0.2)]">
+              <Button asChild size="lg" variant="default" className="text-xl h-16 px-10">
                 <Link href="/register">Get Started Now <ArrowRight className="ml-2 w-6 h-6" /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-white/10 text-foreground hover:bg-white/5 h-16 rounded-2xl px-10 text-lg font-bold">
+              <Button asChild variant="outline" size="lg" className="h-16 px-10 text-lg">
                 <Link href="/dashboard">View Live Demo</Link>
               </Button>
             </div>

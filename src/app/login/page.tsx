@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowLeft, Loader2, Lock } from 'lucide-react';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useFirebase, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +24,9 @@ export default function LoginPage() {
     password: '',
   });
 
-  // If already logged in, redirect to dashboard or provide a way to logout
   useEffect(() => {
     if (user) {
-      // In a real banking app, we might force a logout or just redirect
-      // For now, let's just let them know they are already authenticated
+      router.push('/dashboard');
     }
   }, [user, router]);
 
@@ -53,17 +51,14 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      
       toast({
         title: "Login Successful",
         description: "Welcome back to CodBank. Accessing your secure vault...",
       });
-      
       router.push('/dashboard');
     } catch (error: any) {
       setIsLoading(false);
       let message = "Invalid email or password. Please try again.";
-      
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = "The credentials provided do not match our records.";
       } else if (error.code === 'auth/too-many-requests') {
@@ -97,20 +92,20 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Securely access your account</p>
           </div>
 
-          <Card className="border-white/5 bg-card/50 backdrop-blur-xl shadow-2xl">
+          <Card className="border-white/5 bg-card/50 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden">
             <form onSubmit={handleLogin}>
-              <CardHeader>
-                <CardTitle className="font-headline">Sign In</CardTitle>
+              <CardHeader className="pt-8 px-8 pb-4">
+                <CardTitle className="font-headline text-2xl font-black">Sign In</CardTitle>
                 <CardDescription>Enter your credentials to continue</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 px-8 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="alex@codbank.com" 
-                    className="bg-background/50 border-white/10" 
+                    className="bg-background/50 border-white/10 h-12 rounded-xl" 
                     required
                     value={formData.email}
                     onChange={handleInputChange}
@@ -118,47 +113,47 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link href="#" className="text-xs text-accent hover:underline">Forgot password?</Link>
+                    <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Password</Label>
+                    <Link href="#" className="text-xs text-accent font-bold hover:underline">Forgot password?</Link>
                   </div>
                   <Input 
                     id="password" 
                     type="password" 
-                    className="bg-background/50 border-white/10" 
+                    className="bg-background/50 border-white/10 h-12 rounded-xl" 
                     required
                     value={formData.password}
                     onChange={handleInputChange}
                   />
                 </div>
               </CardContent>
-              <CardFooter className="flex flex-col gap-4">
+              <CardFooter className="flex flex-col gap-6 p-8">
                 <Button 
                   type="submit" 
-                  className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                  className="w-full h-14 text-lg shadow-xl"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Authenticating...
                     </>
                   ) : (
                     <>
-                      <Lock className="mr-2 h-4 w-4" />
+                      <Lock className="mr-2 h-5 w-5" />
                       Login Securely
                     </>
                   )}
                 </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                  Don't have an account? <Link href="/register" className="text-accent hover:underline font-medium">Create one now</Link>
+                <p className="text-center text-sm text-muted-foreground font-medium">
+                  Don't have an account? <Link href="/register" className="text-accent hover:underline font-bold">Create one now</Link>
                 </p>
               </CardFooter>
             </form>
           </Card>
           
-          <div className="mt-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-4">
-            <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent" /> SSL Encrypted</span>
-            <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent" /> Multi-factor Ready</span>
+          <div className="mt-8 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center justify-center gap-6">
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-accent" /> SSL Encrypted</span>
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-accent" /> Multi-factor Ready</span>
           </div>
         </div>
       </main>
