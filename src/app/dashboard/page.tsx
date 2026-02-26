@@ -16,22 +16,32 @@ import {
   Loader2,
   RefreshCw,
   Trophy,
-  LogOut
+  LogOut,
+  User,
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DashboardPage() {
-  const { user, isUserLoading, auth } = useFirebase();
-  const { firestore } = useFirebase();
+  const { user, isUserLoading, auth, firestore } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -133,6 +143,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const firstName = profile?.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+  const fullName = profile?.displayName || user.email || 'CodBank User';
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-body">
@@ -152,17 +163,43 @@ export default function DashboardPage() {
             <Button variant="outline" size="icon" className="bg-card border-white/5 text-muted-foreground hover:text-foreground">
               <Bell className="w-5 h-5" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={handleLogout}
-              className="lg:hidden bg-card border-white/5 text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
-            <div className="h-10 w-10 rounded-full overflow-hidden border border-accent/20">
-              <img src={`https://picsum.photos/seed/${user.uid}/100/100`} alt="Avatar" />
-            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-10 w-10 rounded-full overflow-hidden border border-accent/20 hover:border-accent/50 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20">
+                  <img src={`https://picsum.photos/seed/${user.uid}/100/100`} alt="Avatar" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-card border-white/5 shadow-2xl">
+                <DropdownMenuLabel className="font-headline font-bold px-4 py-3">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm leading-none">{fullName}</p>
+                    <p className="text-xs leading-none text-muted-foreground font-normal">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
+                  <User className="w-4 h-4 mr-2" />
+                  <span>My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  <span>My Accounts</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
+                  <Settings className="w-4 h-4 mr-2" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="py-2 focus:bg-destructive/10 text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
