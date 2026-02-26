@@ -3,6 +3,27 @@ import { ShieldCheck, ArrowRight, Wallet, Lock, TrendingUp, Globe } from 'lucide
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
+  const features = [
+    { 
+      icon: <Wallet className="w-8 h-8 text-accent" />, 
+      title: "Digital Wallet", 
+      desc: "Instant payments and seamless transfers with zero hidden fees.",
+      href: "/register"
+    },
+    { 
+      icon: <TrendingUp className="w-8 h-8 text-accent" />, 
+      title: "Smart Investing", 
+      desc: "Automated portfolios built by industry leading AI and financial experts.",
+      href: "/register"
+    },
+    { 
+      icon: <Globe className="w-8 h-8 text-accent" />, 
+      title: "Global Access", 
+      desc: "Spend and withdraw in any currency with real-time mid-market rates.",
+      href: "/register"
+    }
+  ];
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-6 lg:px-12 h-20 flex items-center border-b bg-background/50 backdrop-blur-md sticky top-0 z-50">
@@ -41,8 +62,8 @@ export default function Home() {
               <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-background font-bold text-lg h-14">
                 <Link href="/register">Get Started <ArrowRight className="ml-2 w-5 h-5" /></Link>
               </Button>
-              <Button variant="outline" size="lg" className="border-primary/50 text-primary-foreground hover:bg-primary/10 h-14">
-                View Demo
+              <Button asChild variant="outline" size="lg" className="border-primary/50 text-primary-foreground hover:bg-primary/10 h-14 cursor-pointer">
+                <Link href="/dashboard">View Demo</Link>
               </Button>
             </div>
           </div>
@@ -55,16 +76,19 @@ export default function Home() {
               <p className="text-muted-foreground max-w-xl mx-auto">Everything you need to manage, save, and grow your wealth in one place.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { icon: <Wallet className="w-8 h-8 text-accent" />, title: "Digital Wallet", desc: "Instant payments and seamless transfers with zero hidden fees." },
-                { icon: <TrendingUp className="w-8 h-8 text-accent" />, title: "Smart Investing", desc: "Automated portfolios built by industry leading AI and financial experts." },
-                { icon: <Globe className="w-8 h-8 text-accent" />, title: "Global Access", desc: "Spend and withdraw in any currency with real-time mid-market rates." }
-              ].map((item, i) => (
-                <div key={i} className="p-8 rounded-2xl bg-card border border-white/5 hover:border-accent/20 transition-all group">
+              {features.map((item, i) => (
+                <Link 
+                  key={i} 
+                  href={item.href}
+                  className="p-8 rounded-2xl bg-card border border-white/5 hover:border-accent/20 transition-all group cursor-pointer hover:shadow-2xl hover:shadow-accent/5"
+                >
                   <div className="mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <h3 className="text-xl font-headline font-bold mb-3">{item.title}</h3>
+                  <h3 className="text-xl font-headline font-bold mb-3 flex items-center gap-2">
+                    {item.title}
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-accent" />
+                  </h3>
                   <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
