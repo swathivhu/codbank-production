@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 222 47% 4%;
+    --background: 222 47% 2%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
+    --card: 222 47% 4%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 5%;
+    --popover: 222 47% 3%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 217 32% 17%;
+    --secondary: 217 32% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 32% 12%;
+    --muted-foreground: 215 20% 50%;
     --accent: 170 60% 60%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
+    --border: 217 32% 12%;
+    --input: 217 32% 12%;
     --ring: 170 60% 60%;
-    --radius: 1rem;
+    --radius: 1.25rem;
   }
 }
 
@@ -33,32 +33,40 @@
   }
   body {
     @apply bg-background text-foreground selection:bg-accent/30 selection:text-accent font-body antialiased;
-    background-image: radial-gradient(circle at 50% -20%, hsl(222, 47%, 12%), transparent 70%);
+    background-image: 
+      radial-gradient(circle at 50% -20%, hsl(222, 47%, 10%), transparent 70%),
+      radial-gradient(circle at 0% 100%, hsl(170, 60%, 5%), transparent 40%);
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-white/5 shadow-2xl transition-all duration-300;
+    @apply bg-card/40 backdrop-blur-2xl border border-white/[0.03] shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] transition-all duration-500 ease-out;
   }
   .glass-card:hover {
-    @apply -translate-y-1 border-white/10 shadow-accent/5;
+    @apply -translate-y-1.5 border-white/[0.08] shadow-accent/5;
   }
   .heading-xl {
-    @apply text-4xl md:text-6xl font-headline font-bold tracking-tight leading-[1.1];
-  }
-  .subtext {
-    @apply text-muted-foreground text-sm md:text-base leading-relaxed;
+    @apply text-5xl md:text-7xl font-headline font-black tracking-tighter leading-[0.95];
   }
   .animate-page-entry {
-    animation: page-entry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: page-entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-white/5 rounded-full hover:bg-white/10 transition-colors;
   }
 }
 
 @keyframes page-entry {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
