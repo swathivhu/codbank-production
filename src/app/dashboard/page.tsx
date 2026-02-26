@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { MOCK_TRANSACTIONS } from '@/lib/mock-data';
@@ -105,9 +105,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    if (!isUserLoading && !user) {
+  }, []);
+
+  useEffect(() => {
+    if (!isUserLoading && !user && mounted) {
       router.push('/login');
-      return;
     }
 
     const fetchInitialData = async () => {
@@ -123,8 +125,10 @@ export default function DashboardPage() {
       }
     };
 
-    fetchInitialData();
-  }, [user, isUserLoading, firestore, router]);
+    if (user && firestore) {
+      fetchInitialData();
+    }
+  }, [user, isUserLoading, firestore, router, mounted]);
 
   const handleCheckBalance = async () => {
     if (!user || !firestore) return;
@@ -149,6 +153,14 @@ export default function DashboardPage() {
       setIsFetching(false);
     }
   };
+
+  const resetDialog = useCallback(() => {
+    setCreatedAccountNumber(null);
+    setAccountType('Savings');
+    setInitialDeposit('1000');
+    setIsConfirmed(false);
+    setIsCreating(false);
+  }, []);
 
   const handleCreateAccount = async () => {
     if (!user || !firestore) return;
@@ -182,14 +194,12 @@ export default function DashboardPage() {
     }
   };
 
-  const closeCreateDialog = () => {
-    setIsCreateDialogOpen(false);
-    setTimeout(() => {
-      setCreatedAccountNumber(null);
-      setAccountType('Savings');
-      setInitialDeposit('1000');
-      setIsConfirmed(false);
-    }, 300);
+  const onDialogChange = (open: boolean) => {
+    setIsCreateDialogOpen(open);
+    if (!open) {
+      // Delay reset for transition
+      setTimeout(resetDialog, 300);
+    }
   };
 
   const handleLogout = async () => {
@@ -251,7 +261,7 @@ export default function DashboardPage() {
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 glass-card p-3 rounded-3xl shadow-2xl">
+              <DropdownMenuContent align="end" className="w-72 bg-card/90 backdrop-blur-2xl border border-white/10 p-3 rounded-3xl shadow-2xl">
                 <DropdownMenuLabel className="px-5 py-5">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-black font-headline tracking-tight">{fullName}</p>
@@ -309,13 +319,13 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-headline font-black mb-3 tracking-tighter">{accounts?.length || 0}</div>
-                <Dialog open={isCreateDialogOpen} onOpenChange={(open) => !open ? closeCreateDialog() : setIsCreateDialogOpen(true)}>
+                <Dialog open={isCreateDialogOpen} onOpenChange={onDialogChange}>
                   <DialogTrigger asChild>
                     <button className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline flex items-center gap-2 transition-all hover:gap-3">
                       <Plus className="w-3.5 h-3.5" /> Initialize New Vault
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="glass-card sm:max-w-[480px] rounded-[2.5rem] border-white/5 p-8">
+                  <DialogContent className="bg-card/95 backdrop-blur-3xl sm:max-w-[480px] rounded-[2.5rem] border-white/10 p-8 shadow-2xl">
                     {!createdAccountNumber ? (
                       <>
                         <DialogHeader className="space-y-4">
@@ -329,7 +339,7 @@ export default function DashboardPage() {
                               <SelectTrigger className="bg-white/5 border-white/5 h-16 rounded-2xl font-black text-xs uppercase tracking-widest focus:ring-accent/20">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="glass-card rounded-2xl p-2 border-white/10">
+                              <SelectContent className="bg-card/95 backdrop-blur-2xl rounded-2xl p-2 border-white/10 shadow-2xl z-[100]">
                                 <SelectItem value="Savings" className="rounded-xl py-3 px-4 focus:bg-accent/10 focus:text-accent font-black text-xs uppercase tracking-widest">Savings Vault (3.5% APY)</SelectItem>
                                 <SelectItem value="Current" className="rounded-xl py-3 px-4 focus:bg-accent/10 focus:text-accent font-black text-xs uppercase tracking-widest">Operating Account</SelectItem>
                               </SelectContent>
@@ -372,7 +382,7 @@ export default function DashboardPage() {
                             </Button>
                           </div>
                         </div>
-                        <Button onClick={closeCreateDialog} className="w-full h-18 text-lg rounded-3xl">Return to System</Button>
+                        <Button onClick={() => onDialogChange(false)} className="w-full h-18 text-lg rounded-3xl">Return to System</Button>
                       </div>
                     )}
                   </DialogContent>
