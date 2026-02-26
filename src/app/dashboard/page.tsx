@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,12 +11,12 @@ import {
   Search, 
   Bell,
   Plus,
-  MoreVertical,
   Filter,
   Wallet,
   Loader2,
   RefreshCw,
-  Trophy
+  Trophy,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,11 +25,12 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, auth } = useFirebase();
   const { firestore } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
@@ -56,7 +56,7 @@ export default function DashboardPage() {
             setBalance(snap.data().balance);
           }
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          // Error handled by Firebase Error Listener
         }
       }
     };
@@ -105,6 +105,23 @@ export default function DashboardPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "Your secure session has been terminated.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Error",
+        description: "There was a problem signing you out.",
+      });
+    }
+  };
+
   if (isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -134,6 +151,14 @@ export default function DashboardPage() {
             </div>
             <Button variant="outline" size="icon" className="bg-card border-white/5 text-muted-foreground hover:text-foreground">
               <Bell className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleLogout}
+              className="lg:hidden bg-card border-white/5 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="w-5 h-5" />
             </Button>
             <div className="h-10 w-10 rounded-full overflow-hidden border border-accent/20">
               <img src={`https://picsum.photos/seed/${user.uid}/100/100`} alt="Avatar" />
