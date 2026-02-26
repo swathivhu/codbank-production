@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   ArrowUpRight, 
@@ -11,7 +11,10 @@ import {
   ShieldCheck,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Wallet,
+  TrendingUp,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirebase } from '@/firebase';
@@ -43,6 +46,7 @@ const NavItem = ({ icon, label, href, active }: NavItemProps) => (
 export function DashboardNav() {
   const { auth } = useFirebase();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -65,18 +69,47 @@ export function DashboardNav() {
   return (
     <div className="flex flex-col h-full bg-card border-r border-white/5 p-6 w-72 hidden lg:flex">
       <div className="flex items-center gap-2 mb-10">
-        <div className="bg-primary p-1.5 rounded-lg">
-          <ShieldCheck className="w-6 h-6 text-accent" />
-        </div>
-        <span className="text-xl font-bold font-headline tracking-tight">CodBank</span>
+        <Link href="/" className="flex items-center gap-2">
+          <div className="bg-primary p-1.5 rounded-lg">
+            <ShieldCheck className="w-6 h-6 text-accent" />
+          </div>
+          <span className="text-xl font-bold font-headline tracking-tight">CodBank</span>
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-2">
-        <NavItem icon={<LayoutDashboard className="w-5 h-5" />} label="Overview" href="/dashboard" active />
-        <NavItem icon={<ArrowUpRight className="w-5 h-5" />} label="Transfers" href="/dashboard" />
+        <NavItem 
+          icon={<LayoutDashboard className="w-5 h-5" />} 
+          label="Overview" 
+          href="/dashboard" 
+          active={pathname === '/dashboard'} 
+        />
+        <NavItem 
+          icon={<Wallet className="w-5 h-5" />} 
+          label="Digital Wallet" 
+          href="/wallet" 
+          active={pathname === '/wallet'} 
+        />
+        <NavItem 
+          icon={<TrendingUp className="w-5 h-5" />} 
+          label="Smart Investing" 
+          href="/investing" 
+          active={pathname === '/investing'} 
+        />
+        <NavItem 
+          icon={<Globe className="w-5 h-5" />} 
+          label="Global Access" 
+          href="/global" 
+          active={pathname === '/global'} 
+        />
+        
+        <div className="pt-6 pb-2">
+          <p className="px-4 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Manage</p>
+        </div>
         <NavItem icon={<History className="w-5 h-5" />} label="History" href="/dashboard" />
         <NavItem icon={<CreditCard className="w-5 h-5" />} label="Accounts" href="/dashboard" />
         <NavItem icon={<User className="w-5 h-5" />} label="Profile" href="/dashboard" />
+        
         <div className="pt-6 pb-2">
           <p className="px-4 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Preferences</p>
         </div>

@@ -8,19 +8,19 @@ export default function Home() {
       icon: <Wallet className="w-8 h-8 text-accent" />, 
       title: "Digital Wallet", 
       desc: "Instant payments and seamless transfers with zero hidden fees.",
-      href: "/register"
+      href: "/wallet"
     },
     { 
       icon: <TrendingUp className="w-8 h-8 text-accent" />, 
       title: "Smart Investing", 
       desc: "Automated portfolios built by industry leading AI and financial experts.",
-      href: "/register"
+      href: "/investing"
     },
     { 
       icon: <Globe className="w-8 h-8 text-accent" />, 
       title: "Global Access", 
       desc: "Spend and withdraw in any currency with real-time mid-market rates.",
-      href: "/register"
+      href: "/global"
     }
   ];
 
