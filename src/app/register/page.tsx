@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { useFirebase, setDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,10 +35,9 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!formData.email || !formData.password || !formData.username) {
       toast({
         variant: "destructive",
@@ -59,60 +58,60 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    try {
-      // 1. Hash the password with bcrypt (10 rounds) as requested
-      // Using bcryptjs for client-side compatibility
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(formData.password, salt);
+    // 1. Hash the password with bcrypt (10 rounds)
+    bcrypt.genSalt(10)
+      .then(salt => bcrypt.hash(formData.password, salt))
+      .then(hashedPassword => {
+        // 2. Create the user in Firebase Auth (Non-blocking flow)
+        return createUserWithEmailAndPassword(auth, formData.email, formData.password)
+          .then(userCredential => {
+            const user = userCredential.user;
 
-      // 2. Create the user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
+            // 3. Create the profile document in Firestore (Non-blocking)
+            const profileData = {
+              id: user.uid,
+              userId: user.uid,
+              username: formData.username,
+              email: formData.email,
+              password: hashedPassword,
+              phone: formData.phone || '',
+              role: 'CUSTOMER',
+              balance: 100000,
+              createdAt: serverTimestamp(),
+              displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+            };
 
-      // 3. Create the profile document in Firestore
-      // Document ID matches the Auth UID as per security requirements in firestore.rules
-      await setDoc(doc(firestore, 'codusers', user.uid), {
-        id: user.uid, // Required for 'create' rule validation
-        userId: user.uid,
-        username: formData.username,
-        email: formData.email,
-        password: hashedPassword, // Storing hashed version for profile record
-        phone: formData.phone || '',
-        role: 'CUSTOMER', // Role is always CUSTOMER during registration
-        balance: 100000, // Default balance as requested
-        createdAt: serverTimestamp(),
-        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+            setDocumentNonBlocking(doc(firestore, 'codusers', user.uid), profileData, { merge: true });
+
+            toast({
+              title: "Registration Successful",
+              description: "Your secure account has been created. Redirecting to login...",
+            });
+
+            // 4. Sign out and redirect
+            return signOut(auth).then(() => {
+              router.push('/login');
+            });
+          });
+      })
+      .catch((error: any) => {
+        setIsLoading(false);
+        let message = "An unexpected error occurred. Please try again.";
+        
+        if (error.code === 'auth/email-already-in-use') {
+          message = "This email is already registered. Please try logging in.";
+        } else if (error.code === 'auth/invalid-email') {
+          message = "Please enter a valid email address.";
+        } else if (error.code === 'permission-denied') {
+          message = "You do not have permission to create this profile.";
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Registration Failed",
+          description: message,
+        });
       });
-
-      toast({
-        title: "Registration Successful",
-        description: "Your secure account has been created. Please log in to continue.",
-      });
-
-      // 4. Sign out the user (Firebase auto-logs in after creation)
-      // and redirect to login page as requested
-      await signOut(auth);
-      router.push('/login');
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      let message = "An unexpected error occurred. Please try again.";
-      
-      if (error.code === 'auth/email-already-in-use') {
-        message = "This email is already registered. Please try logging in.";
-      } else if (error.code === 'auth/invalid-email') {
-        message = "Please enter a valid email address.";
-      } else if (error.code === 'permission-denied') {
-        message = "You do not have permission to create this profile.";
-      }
-
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
