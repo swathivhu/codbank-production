@@ -23,7 +23,9 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -77,6 +79,7 @@ export default function DashboardPage() {
   const [accountType, setAccountType] = useState<'Savings' | 'Current'>('Savings');
   const [initialDeposit, setInitialDeposit] = useState('1000');
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [createdAccountNumber, setCreatedAccountNumber] = useState<string | null>(null);
 
   // Fetch accounts collection
   const accountsQuery = useMemoFirebase(() => {
@@ -182,20 +185,13 @@ export default function DashboardPage() {
         createdAt: serverTimestamp(),
       });
 
-      toast({
-        title: "New Account Created Successfully",
-        description: `Your ${accountType} account (${accountNumber}) is now active.`,
-      });
-      
-      setIsCreateDialogOpen(false);
-      setAccountType('Savings');
-      setInitialDeposit('1000');
-      setIsConfirmed(false);
+      setCreatedAccountNumber(accountNumber);
       
       confetti({
-        particleCount: 100,
-        spread: 60,
-        colors: ['#5cd6c1', '#ffffff']
+        particleCount: 200,
+        spread: 90,
+        origin: { y: 0.5 },
+        colors: ['#5cd6c1', '#1a3a4a', '#ffffff']
       });
 
     } catch (error) {
@@ -207,6 +203,17 @@ export default function DashboardPage() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const closeCreateDialog = () => {
+    setIsCreateDialogOpen(false);
+    // Reset form after a short delay to allow transition
+    setTimeout(() => {
+      setCreatedAccountNumber(null);
+      setAccountType('Savings');
+      setInitialDeposit('1000');
+      setIsConfirmed(false);
+    }, 300);
   };
 
   const handleLogout = async () => {
@@ -324,7 +331,7 @@ export default function DashboardPage() {
 
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Action Buttons */}
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog open={isCreateDialogOpen} onOpenChange={(open) => !open ? closeCreateDialog() : setIsCreateDialogOpen(true)}>
               <DialogTrigger asChild>
                 <Card className="border-2 border-dashed border-white/10 hover:border-accent/30 hover:bg-white/5 transition-all cursor-pointer group flex items-center justify-center text-center p-6 h-full">
                   <div className="flex flex-col items-center">
@@ -336,62 +343,101 @@ export default function DashboardPage() {
                   </div>
                 </Card>
               </DialogTrigger>
-              <DialogContent className="bg-card border-white/10 text-foreground sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle className="font-headline text-2xl">Open New Secure Account</DialogTitle>
-                  <DialogDescription className="text-muted-foreground">
-                    Select your account type and make your initial deposit to get started.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Account Category</Label>
-                    <Select value={accountType} onValueChange={(v: any) => setAccountType(v)}>
-                      <SelectTrigger className="bg-background border-white/10">
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-white/10">
-                        <SelectItem value="Savings">Savings Account (3.5% APY)</SelectItem>
-                        <SelectItem value="Current">Current Account (Daily use)</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <DialogContent className="bg-card border-white/10 text-foreground sm:max-w-[425px] overflow-hidden">
+                {!createdAccountNumber ? (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="font-headline text-2xl">Open New Secure Account</DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        Select your account type and make your initial deposit to get started.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="type">Account Category</Label>
+                        <Select value={accountType} onValueChange={(v: any) => setAccountType(v)}>
+                          <SelectTrigger className="bg-background border-white/10">
+                            <SelectValue placeholder="Select account type" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10">
+                            <SelectItem value="Savings">Savings Account (3.5% APY)</SelectItem>
+                            <SelectItem value="Current">Current Account (Daily use)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="deposit">Initial Funding ($)</Label>
+                        <Input 
+                          id="deposit" 
+                          type="number" 
+                          min="1000"
+                          value={initialDeposit} 
+                          onChange={(e) => setInitialDeposit(e.target.value)}
+                          className="bg-background border-white/10"
+                        />
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> Minimum required deposit: $1,000.00
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2 pt-2">
+                        <Checkbox 
+                          id="confirm" 
+                          checked={isConfirmed} 
+                          onCheckedChange={(v: any) => setIsConfirmed(v)}
+                          className="border-white/20 mt-1"
+                        />
+                        <Label htmlFor="confirm" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                          I verify that I have read the terms and authorize CodBank to create this new secure account.
+                        </Label>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button 
+                        onClick={handleCreateAccount} 
+                        disabled={isCreating}
+                        className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                      >
+                        {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                        Confirm & Create Account
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <div className="py-8 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center scale-110 shadow-[0_0_30px_rgba(92,214,193,0.2)]">
+                      <CheckCircle2 className="w-10 h-10 text-accent" />
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold font-headline">Account Activated!</h2>
+                      <p className="text-sm text-muted-foreground">Your secure {accountType} account is now ready.</p>
+                    </div>
+                    
+                    <div className="w-full bg-background/50 border border-white/5 rounded-xl p-4 space-y-1 relative group">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">New Account Number</p>
+                      <div className="flex items-center justify-center gap-3">
+                        <span className="text-2xl font-mono font-bold tracking-wider text-accent">{createdAccountNumber}</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:text-accent"
+                          onClick={() => {
+                            navigator.clipboard.writeText(createdAccountNumber);
+                            toast({ title: "Copied", description: "Account number copied to clipboard." });
+                          }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button 
+                      onClick={closeCreateDialog}
+                      className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                    >
+                      Go to My Accounts
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="deposit">Initial Funding ($)</Label>
-                    <Input 
-                      id="deposit" 
-                      type="number" 
-                      min="1000"
-                      value={initialDeposit} 
-                      onChange={(e) => setInitialDeposit(e.target.value)}
-                      className="bg-background border-white/10"
-                    />
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> Minimum required deposit: $1,000.00
-                    </p>
-                  </div>
-                  <div className="flex items-start space-x-2 pt-2">
-                    <Checkbox 
-                      id="confirm" 
-                      checked={isConfirmed} 
-                      onCheckedChange={(v: any) => setIsConfirmed(v)}
-                      className="border-white/20 mt-1"
-                    />
-                    <Label htmlFor="confirm" className="text-xs text-muted-foreground leading-tight cursor-pointer">
-                      I verify that I have read the terms and authorize CodBank to create this new secure account.
-                    </Label>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button 
-                    onClick={handleCreateAccount} 
-                    disabled={isCreating}
-                    className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
-                  >
-                    {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                    Confirm & Create Account
-                  </Button>
-                </DialogFooter>
+                )}
               </DialogContent>
             </Dialog>
 
