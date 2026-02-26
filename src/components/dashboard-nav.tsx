@@ -14,7 +14,9 @@ import {
   LogOut,
   Wallet,
   TrendingUp,
-  Globe
+  Globe,
+  PieChart,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirebase } from '@/firebase';
@@ -32,9 +34,9 @@ const NavItem = ({ icon, label, href, active }: NavItemProps) => (
   <Link 
     href={href} 
     className={cn(
-      "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-bold text-base",
+      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-bold text-sm",
       active 
-        ? "bg-accent/10 text-accent border border-accent/20 shadow-[0_0_20px_rgba(92,214,193,0.1)]" 
+        ? "bg-accent/10 text-accent border border-accent/20 shadow-[0_0_20px_rgba(92,214,193,0.05)]" 
         : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
     )}
   >
@@ -69,43 +71,52 @@ export function DashboardNav() {
   };
 
   return (
-    <div className="flex flex-col h-full glass-card border-r border-white/5 p-8 w-80 hidden lg:flex">
-      <div className="flex items-center gap-3 mb-12">
+    <div className="flex flex-col h-full bg-card/40 backdrop-blur-3xl border-r border-white/5 p-6 w-72 hidden lg:flex">
+      <div className="flex items-center gap-3 mb-10 px-2">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="bg-accent p-2 rounded-xl group-hover:scale-110 transition-transform">
-            <ShieldCheck className="w-6 h-6 text-background" />
+          <div className="bg-accent p-2 rounded-xl group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(92,214,193,0.3)]">
+            <ShieldCheck className="w-5 h-5 text-background" />
           </div>
-          <span className="text-2xl font-bold font-headline tracking-tighter">CodBank</span>
+          <span className="text-xl font-black font-headline tracking-tighter">CodBank</span>
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-3">
-        <NavItem icon={<LayoutDashboard className="w-5 h-5" />} label="Overview" href="/dashboard" active={pathname === '/dashboard'} />
-        <NavItem icon={<Wallet className="w-5 h-5" />} label="Digital Wallet" href="/wallet" active={pathname === '/wallet'} />
-        <NavItem icon={<TrendingUp className="w-5 h-5" />} label="Smart Investing" href="/investing" active={pathname === '/investing'} />
-        <NavItem icon={<Globe className="w-5 h-5" />} label="Global Access" href="/global" active={pathname === '/global'} />
-        
-        <div className="pt-10 pb-4">
-          <p className="px-5 text-[10px] uppercase tracking-[0.4em] text-muted-foreground/50 font-black">Management</p>
+      <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+        <div>
+          <p className="px-4 text-[10px] uppercase tracking-[0.4em] text-muted-foreground/40 font-black mb-4">Core</p>
+          <nav className="space-y-1.5">
+            <NavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Overview" href="/dashboard" active={pathname === '/dashboard'} />
+            <NavItem icon={<Wallet className="w-4 h-4" />} label="Digital Wallet" href="/wallet" active={pathname === '/wallet'} />
+            <NavItem icon={<TrendingUp className="w-4 h-4" />} label="Smart Investing" href="/investing" active={pathname === '/investing'} />
+            <NavItem icon={<Globe className="w-4 h-4" />} label="Global Access" href="/global" active={pathname === '/global'} />
+          </nav>
         </div>
-        <NavItem icon={<History className="w-5 h-5" />} label="Activity Logs" href="/dashboard" />
-        <NavItem icon={<CreditCard className="w-5 h-5" />} label="Card Services" href="/dashboard" />
-        <NavItem icon={<User className="w-5 h-5" />} label="Security Profile" href="/dashboard" />
         
-        <div className="pt-10 pb-4">
-          <p className="px-5 text-[10px] uppercase tracking-[0.4em] text-muted-foreground/50 font-black">Preferences</p>
+        <div>
+          <p className="px-4 text-[10px] uppercase tracking-[0.4em] text-muted-foreground/40 font-black mb-4">Management</p>
+          <nav className="space-y-1.5">
+            <NavItem icon={<CreditCard className="w-4 h-4" />} label="Card Services" href="/dashboard" />
+            <NavItem icon={<BarChart3 className="w-4 h-4" />} label="Market Trends" href="/investing" />
+            <NavItem icon={<History className="w-4 h-4" />} label="Security Logs" href="/dashboard" />
+          </nav>
         </div>
-        <NavItem icon={<Settings className="w-5 h-5" />} label="Settings" href="/dashboard" />
-        <NavItem icon={<HelpCircle className="w-5 h-5" />} label="Support" href="/dashboard" />
-      </nav>
 
-      <div className="pt-8 mt-auto">
+        <div>
+          <p className="px-4 text-[10px] uppercase tracking-[0.4em] text-muted-foreground/40 font-black mb-4">Personal</p>
+          <nav className="space-y-1.5">
+            <NavItem icon={<User className="w-4 h-4" />} label="Profile" href="/dashboard" />
+            <NavItem icon={<Settings className="w-4 h-4" />} label="Preferences" href="/dashboard" />
+          </nav>
+        </div>
+      </div>
+
+      <div className="pt-6 border-t border-white/5">
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-destructive hover:bg-destructive/10 transition-all font-black text-base"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-all font-black text-sm"
         >
-          <LogOut className="w-5 h-5" />
-          <span>Sign Out</span>
+          <LogOut className="w-4 h-4" />
+          <span>Terminate Session</span>
         </button>
       </div>
     </div>
