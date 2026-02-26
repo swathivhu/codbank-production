@@ -11,7 +11,6 @@ import {
   Search, 
   Bell,
   Plus,
-  Filter,
   Wallet,
   Loader2,
   RefreshCw,
@@ -25,7 +24,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Copy,
-  Check
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -89,7 +88,7 @@ export default function DashboardPage() {
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsQuery);
 
-  // Initial fetch of profile
+  // Initial fetch of profile and balance
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -106,7 +105,7 @@ export default function DashboardPage() {
             setBalance(snap.data().balance);
           }
         } catch (error) {
-          // Handled by global listener
+          // Handled centrally
         }
       }
     };
@@ -119,6 +118,7 @@ export default function DashboardPage() {
     
     setIsFetching(true);
     try {
+      // Direct Firestore access for high-security balance checking
       const docRef = doc(firestore, 'codusers', user.uid);
       const snap = await getDoc(docRef);
       
@@ -126,6 +126,7 @@ export default function DashboardPage() {
         const newBalance = snap.data().balance;
         setBalance(newBalance);
         
+        // Celebration animation
         confetti({
           particleCount: 150,
           spread: 70,
@@ -134,15 +135,15 @@ export default function DashboardPage() {
         });
 
         toast({
-          title: "Balance Updated",
-          description: `Your total aggregated balance is $${newBalance.toLocaleString()}.`,
+          title: "Balance Verified",
+          description: `Your vault balance is currently $${newBalance.toLocaleString()}.`,
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch balance.",
+        title: "Security Verification Failed",
+        description: "Could not refresh vault balance. Please try again.",
       });
     } finally {
       setIsFetching(false);
@@ -173,7 +174,6 @@ export default function DashboardPage() {
 
     setIsCreating(true);
     try {
-      // Generate a 10-digit account number
       const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
       
       const accountsRef = collection(firestore, 'codusers', user.uid, 'accounts');
@@ -207,7 +207,6 @@ export default function DashboardPage() {
 
   const closeCreateDialog = () => {
     setIsCreateDialogOpen(false);
-    // Reset form after a short delay to allow transition
     setTimeout(() => {
       setCreatedAccountNumber(null);
       setAccountType('Savings');
@@ -247,50 +246,43 @@ export default function DashboardPage() {
       <DashboardNav />
       
       <main className="flex-1 overflow-auto p-6 lg:p-10">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
           <div>
-            <h1 className="text-3xl font-bold font-headline mb-1">Welcome back, {firstName}</h1>
-            <p className="text-muted-foreground">Manage your secure accounts and track your growth.</p>
+            <h1 className="text-3xl font-bold font-headline mb-1 tracking-tight">Welcome back, {firstName}</h1>
+            <p className="text-muted-foreground text-sm">Securely managing your assets at CodBank.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search accounts..." className="pl-10 w-64 bg-card border-white/5" />
+          <div className="flex items-center gap-4">
+            <div className="relative hidden md:block group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
+              <Input placeholder="Search accounts..." className="pl-10 w-64 bg-card border-white/5 focus-visible:ring-accent/20" />
             </div>
-            <Button variant="outline" size="icon" className="bg-card border-white/5 text-muted-foreground hover:text-foreground">
-              <Bell className="w-5 h-5" />
-            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="h-10 w-10 rounded-full overflow-hidden border border-accent/20 hover:border-accent/50 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20">
+                <button className="h-10 w-10 rounded-full overflow-hidden border border-accent/20 hover:border-accent/50 transition-all focus:outline-none focus:ring-4 focus:ring-accent/10">
                   <img src={`https://picsum.photos/seed/${user.uid}/100/100`} alt="Avatar" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-white/10 shadow-2xl">
-                <DropdownMenuLabel className="font-headline font-bold px-4 py-3">
+              <DropdownMenuContent align="end" className="w-64 bg-card border-white/10 shadow-2xl p-2">
+                <DropdownMenuLabel className="font-headline font-bold px-3 py-3">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm leading-none">{fullName}</p>
                     <p className="text-xs leading-none text-muted-foreground font-normal">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-white/5" />
-                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
+                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer rounded-lg">
                   <User className="w-4 h-4 mr-2" />
                   <span>My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  <span>Manage Accounts</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer">
+                <DropdownMenuItem className="py-2 focus:bg-accent/10 focus:text-accent cursor-pointer rounded-lg">
                   <Settings className="w-4 h-4 mr-2" />
                   <span>Security Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuItem 
                   onClick={handleLogout}
-                  className="py-2 focus:bg-destructive/10 text-destructive focus:text-destructive cursor-pointer"
+                  className="py-2 focus:bg-destructive/10 text-destructive focus:text-destructive cursor-pointer rounded-lg"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   <span>Sign Out</span>
@@ -301,93 +293,95 @@ export default function DashboardPage() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          <Card className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative lg:col-span-1">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+          <Card className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative lg:col-span-1 shadow-2xl">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 rounded-full -mr-24 -mt-24 blur-[80px]"></div>
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center mb-2">
-                <Badge variant="secondary" className="bg-primary/20 text-accent border-none">Total Net Worth</Badge>
-                <Wallet className="w-4 h-4 text-accent" />
+                <Badge variant="secondary" className="bg-accent/10 text-accent border-none font-bold px-2 py-0.5">Total Net Worth</Badge>
+                <Wallet className="w-5 h-5 text-accent opacity-80" />
               </div>
-              <CardTitle className="text-4xl font-headline font-bold">
+              <CardTitle className="text-5xl font-headline font-bold tracking-tight py-2">
                 {balance !== null ? `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••'}
               </CardTitle>
-              <CardDescription className="font-mono text-[10px] tracking-widest uppercase">
-                Aggregated Vault Balance
+              <CardDescription className="font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-muted-foreground/60">
+                Aggregated Multi-Vault Balance
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2 mt-6">
                 <Button 
                   onClick={handleCheckBalance} 
                   disabled={isFetching}
-                  className="flex-1 bg-accent hover:bg-accent/90 text-background font-bold shadow-[0_0_15px_rgba(92,214,193,0.3)]"
+                  className="flex-1 bg-accent hover:bg-accent/90 text-background font-black h-12 shadow-[0_0_20px_rgba(92,214,193,0.3)] group"
                 >
-                  {isFetching ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
-                  Refresh Vault
+                  {isFetching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2 group-hover:scale-125 transition-transform" />}
+                  Check Balance
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Action Buttons */}
             <Dialog open={isCreateDialogOpen} onOpenChange={(open) => !open ? closeCreateDialog() : setIsCreateDialogOpen(true)}>
               <DialogTrigger asChild>
-                <Card className="border-2 border-dashed border-white/10 hover:border-accent/30 hover:bg-white/5 transition-all cursor-pointer group flex items-center justify-center text-center p-6 h-full">
+                <Card className="border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/[0.02] transition-all cursor-pointer group flex items-center justify-center text-center p-6 h-full shadow-lg">
                   <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <Plus className="w-6 h-6 text-accent" />
+                    <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300 shadow-inner">
+                      <Plus className="w-7 h-7 text-accent" />
                     </div>
-                    <CardTitle className="text-lg font-headline">Create New Account</CardTitle>
-                    <CardDescription>Expand your portfolio</CardDescription>
+                    <CardTitle className="text-xl font-headline font-bold mb-1">Create New Account</CardTitle>
+                    <CardDescription className="text-xs">Expand your financial portfolio today</CardDescription>
                   </div>
                 </Card>
               </DialogTrigger>
-              <DialogContent className="bg-card border-white/10 text-foreground sm:max-w-[425px] overflow-hidden">
+              <DialogContent className="bg-card border-white/10 text-foreground sm:max-w-[425px] overflow-hidden shadow-2xl">
                 {!createdAccountNumber ? (
                   <>
                     <DialogHeader>
-                      <DialogTitle className="font-headline text-2xl">Open New Secure Account</DialogTitle>
+                      <DialogTitle className="font-headline text-2xl font-bold">Open Secure Account</DialogTitle>
                       <DialogDescription className="text-muted-foreground">
-                        Select your account type and make your initial deposit to get started.
+                        Select account parameters to initialize your new secure vault.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="type">Account Category</Label>
+                        <Label htmlFor="type" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Category</Label>
                         <Select value={accountType} onValueChange={(v: any) => setAccountType(v)}>
-                          <SelectTrigger className="bg-background border-white/10">
+                          <SelectTrigger className="bg-background border-white/5 h-12 focus:ring-accent/20">
                             <SelectValue placeholder="Select account type" />
                           </SelectTrigger>
                           <SelectContent className="bg-card border-white/10">
-                            <SelectItem value="Savings">Savings Account (3.5% APY)</SelectItem>
-                            <SelectItem value="Current">Current Account (Daily use)</SelectItem>
+                            <SelectItem value="Savings">Savings Vault (3.5% APY)</SelectItem>
+                            <SelectItem value="Current">Current Account (Fluid Use)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="deposit">Initial Funding ($)</Label>
-                        <Input 
-                          id="deposit" 
-                          type="number" 
-                          min="1000"
-                          value={initialDeposit} 
-                          onChange={(e) => setInitialDeposit(e.target.value)}
-                          className="bg-background border-white/10"
-                        />
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> Minimum required deposit: $1,000.00
+                        <Label htmlFor="deposit" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Initial Funding ($)</Label>
+                        <div className="relative">
+                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
+                           <Input 
+                            id="deposit" 
+                            type="number" 
+                            min="1000"
+                            value={initialDeposit} 
+                            onChange={(e) => setInitialDeposit(e.target.value)}
+                            className="bg-background border-white/5 h-12 pl-8 focus-visible:ring-accent/20 font-bold"
+                          />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 text-accent" /> Minimum mandatory funding: $1,000.00
                         </p>
                       </div>
-                      <div className="flex items-start space-x-2 pt-2">
+                      <div className="flex items-start space-x-3 pt-2 bg-accent/5 p-3 rounded-xl border border-accent/10">
                         <Checkbox 
                           id="confirm" 
                           checked={isConfirmed} 
                           onCheckedChange={(v: any) => setIsConfirmed(v)}
-                          className="border-white/20 mt-1"
+                          className="border-accent/40 data-[state=checked]:bg-accent data-[state=checked]:text-background mt-1"
                         />
-                        <Label htmlFor="confirm" className="text-xs text-muted-foreground leading-tight cursor-pointer">
-                          I verify that I have read the terms and authorize CodBank to create this new secure account.
+                        <Label htmlFor="confirm" className="text-[10px] text-muted-foreground leading-snug cursor-pointer select-none">
+                          I acknowledge the legal terms and authorize CodBank to initialize this new secure account instance.
                         </Label>
                       </div>
                     </div>
@@ -395,59 +389,63 @@ export default function DashboardPage() {
                       <Button 
                         onClick={handleCreateAccount} 
                         disabled={isCreating}
-                        className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                        className="w-full bg-accent hover:bg-accent/90 text-background font-black h-12 shadow-lg transition-all"
                       >
-                        {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                        Confirm & Create Account
+                        {isCreating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ShieldCheck className="w-5 h-5 mr-2" />}
+                        Finalize & Create
                       </Button>
                     </DialogFooter>
                   </>
                 ) : (
-                  <div className="py-8 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-300">
-                    <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center scale-110 shadow-[0_0_30px_rgba(92,214,193,0.2)]">
-                      <CheckCircle2 className="w-10 h-10 text-accent" />
+                  <div className="py-8 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
+                    <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center scale-110 shadow-[0_0_50px_rgba(92,214,193,0.15)] border border-accent/20">
+                      <CheckCircle2 className="w-12 h-12 text-accent" />
                     </div>
                     <div className="space-y-2">
-                      <h2 className="text-2xl font-bold font-headline">Account Activated!</h2>
-                      <p className="text-sm text-muted-foreground">Your secure {accountType} account is now ready.</p>
+                      <h2 className="text-3xl font-black font-headline tracking-tight">Vault Initialized!</h2>
+                      <p className="text-sm text-muted-foreground">Your {accountType} account is now active on the ledger.</p>
                     </div>
                     
-                    <div className="w-full bg-background/50 border border-white/5 rounded-xl p-4 space-y-1 relative group">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">New Account Number</p>
-                      <div className="flex items-center justify-center gap-3">
-                        <span className="text-2xl font-mono font-bold tracking-wider text-accent">{createdAccountNumber}</span>
+                    <div className="w-full bg-background/80 border border-white/5 rounded-2xl p-6 space-y-2 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60 font-black">Account Identifier</p>
+                      <div className="flex items-center justify-center gap-4">
+                        <span className="text-3xl font-mono font-bold tracking-widest text-accent">{createdAccountNumber}</span>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-accent"
+                          className="h-10 w-10 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-xl"
                           onClick={() => {
                             navigator.clipboard.writeText(createdAccountNumber);
-                            toast({ title: "Copied", description: "Account number copied to clipboard." });
+                            toast({ title: "Copied", description: "Account number saved to clipboard." });
                           }}
                         >
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-5 h-5" />
                         </Button>
                       </div>
                     </div>
 
                     <Button 
                       onClick={closeCreateDialog}
-                      className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                      className="w-full bg-accent hover:bg-accent/90 text-background font-black h-12 rounded-xl"
                     >
-                      Go to My Accounts
+                      Return to Dashboard
                     </Button>
                   </div>
                 )}
               </DialogContent>
             </Dialog>
 
-            <Card className="bg-card border-white/5 flex flex-col justify-center p-6">
-              <div className="flex items-center justify-between mb-4">
+            <Card className="bg-card border-white/5 flex flex-col justify-center p-6 shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <TrendingUp className="w-16 h-16 text-accent" />
+              </div>
+              <div className="flex items-center justify-between mb-4 relative">
                 <h3 className="font-headline font-bold text-lg">Financial Insight</h3>
                 <TrendingUp className="w-5 h-5 text-accent" />
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                You've successfully opened <span className="text-accent font-bold">{accounts?.length || 0}</span> supplemental accounts. diversifying your assets improves long-term stability.
+              <p className="text-sm text-muted-foreground leading-relaxed relative">
+                You currently have <span className="text-accent font-bold">{accounts?.length || 0}</span> active supplemental accounts. Multi-vault diversification reduces counterparty risk.
               </p>
             </Card>
           </div>
@@ -456,40 +454,42 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold font-headline">Recent Activity</h2>
-              <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10">View All History <ChevronRight className="ml-1 w-4 h-4" /></Button>
+              <h2 className="text-2xl font-bold font-headline tracking-tight">Recent Activity</h2>
+              <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10 rounded-full font-bold">
+                View Ledger <ChevronRight className="ml-1 w-4 h-4" />
+              </Button>
             </div>
-            <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/5 text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
-                    <th className="px-6 py-4">Transaction Details</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
+                  <tr className="border-b border-white/5 text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-black">
+                    <th className="px-6 py-5">Origin / Destination</th>
+                    <th className="px-6 py-5">Timestamp</th>
+                    <th className="px-6 py-5 text-right">Value</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {MOCK_TRANSACTIONS.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="px-6 py-4">
+                    <tr key={tx.id} className="hover:bg-accent/[0.02] transition-colors group cursor-pointer">
+                      <td className="px-6 py-5">
                         <div className="flex items-center gap-4">
                           <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center",
+                            "w-10 h-10 rounded-xl flex items-center justify-center shadow-inner",
                             tx.type === 'credit' ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
                           )}>
                             {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{tx.description}</p>
-                            <Badge variant="outline" className="text-[9px] bg-white/5 border-none h-4 px-1">{tx.category}</Badge>
+                            <p className="font-bold text-sm tracking-tight">{tx.description}</p>
+                            <Badge variant="outline" className="text-[9px] bg-white/5 border-none h-4 px-2 font-black uppercase text-muted-foreground/80">{tx.category}</Badge>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                      <td className="px-6 py-5 text-xs text-muted-foreground font-medium">
                         {new Date(tx.date).toLocaleDateString()}
                       </td>
                       <td className={cn(
-                        "px-6 py-4 text-right font-bold text-sm",
+                        "px-6 py-5 text-right font-black text-sm tracking-tight",
                         tx.type === 'credit' ? "text-accent" : "text-foreground"
                       )}>
                         {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}
@@ -502,7 +502,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold font-headline">Your Accounts</h2>
+            <h2 className="text-2xl font-bold font-headline tracking-tight">Secure Accounts</h2>
             <div className="space-y-4">
               {isAccountsLoading ? (
                 <div className="flex flex-col items-center justify-center p-12 bg-card/50 rounded-2xl border border-white/5">
@@ -510,28 +510,30 @@ export default function DashboardPage() {
                 </div>
               ) : accounts && accounts.length > 0 ? (
                 accounts.map(acc => (
-                  <Card key={acc.id} className="bg-card border-white/5 hover:border-accent/20 transition-all p-5 group">
+                  <Card key={acc.id} className="bg-card border-white/5 hover:border-accent/30 transition-all p-5 group shadow-lg cursor-pointer">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <Badge className="bg-primary/20 text-accent border-none mb-1">{acc.accountType}</Badge>
-                        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Account ID: {acc.accountNumber}</p>
+                        <Badge className="bg-accent/10 text-accent border-none mb-2 font-bold">{acc.accountType}</Badge>
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-bold">ID: {acc.accountNumber}</p>
                       </div>
-                      <CheckCircle2 className="w-4 h-4 text-accent" />
+                      <div className="w-8 h-8 rounded-full bg-accent/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <ChevronRight className="w-4 h-4 text-accent" />
+                      </div>
                     </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold font-headline">${acc.balance.toLocaleString()}</span>
-                      <span className="text-[10px] text-muted-foreground">Available</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black font-headline tracking-tight">${acc.balance.toLocaleString()}</span>
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Available</span>
                     </div>
                   </Card>
                 ))
               ) : (
-                <div className="text-center p-12 bg-card/50 rounded-2xl border border-dashed border-white/10">
-                  <Wallet className="w-8 h-8 text-muted-foreground mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-medium text-muted-foreground">No secondary accounts</p>
+                <div className="text-center p-12 bg-card/50 rounded-2xl border border-dashed border-white/10 shadow-inner">
+                  <Wallet className="w-10 h-10 text-muted-foreground mx-auto mb-4 opacity-10" />
+                  <p className="text-sm font-bold text-muted-foreground/60 mb-1 tracking-tight">No supplemental accounts found</p>
                   <Button 
                     variant="link" 
                     onClick={() => setIsCreateDialogOpen(true)}
-                    className="text-accent text-xs h-auto p-0"
+                    className="text-accent text-xs h-auto p-0 font-black"
                   >
                     Open one now
                   </Button>
