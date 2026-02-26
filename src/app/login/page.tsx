@@ -1,12 +1,11 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowLeft, Loader2, Lock } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { useFirebase, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const { auth } = useFirebase();
+  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +23,14 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+
+  // If already logged in, redirect to dashboard or provide a way to logout
+  useEffect(() => {
+    if (user) {
+      // In a real banking app, we might force a logout or just redirect
+      // For now, let's just let them know they are already authenticated
+    }
+  }, [user, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;

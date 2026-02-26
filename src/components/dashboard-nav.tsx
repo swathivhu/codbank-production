@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   ArrowUpRight, 
@@ -11,6 +14,9 @@ import {
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFirebase } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 type NavItemProps = {
   icon: React.ReactNode;
@@ -35,6 +41,27 @@ const NavItem = ({ icon, label, href, active }: NavItemProps) => (
 );
 
 export function DashboardNav() {
+  const { auth } = useFirebase();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "Your secure session has been terminated.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Error",
+        description: "There was a problem signing you out. Please try again.",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-card border-r border-white/5 p-6 w-72 hidden lg:flex">
       <div className="flex items-center gap-2 mb-10">
@@ -58,13 +85,13 @@ export function DashboardNav() {
       </nav>
 
       <div className="pt-6 border-t border-white/5">
-        <Link 
-          href="/login" 
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-all font-medium"
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-all font-medium"
         >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
-        </Link>
+        </button>
       </div>
     </div>
   );
