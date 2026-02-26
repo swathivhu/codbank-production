@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract futuristic banking data visualization",
+      "imageUrl": "https://images.unsplash.com/photo-1580847097341-0644f15d37d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmdXR1cmlzdGljJTIwYmFua2luZ3xlbnwwfHx8fDE3NzIxMjA1NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic banking"
+    },
+    {
+      "id": "security-icon",
+      "description": "Shield and secure digital lock",
+      "imageUrl": "https://images.unsplash.com/photo-1667453466805-75bbf36e8707?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxkaWdpdGFsJTIwc2VjdXJpdHl8ZW58MHx8fHwxNzcyMTIwNTU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital security"
+    },
+    {
+      "id": "avatar-user",
+      "description": "User profile avatar",
+      "imageUrl": "https://picsum.photos/seed/codbank-user/200/200",
+      "imageHint": "professional avatar"
+    }
+  ]
 }
