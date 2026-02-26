@@ -413,12 +413,13 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
                   <XAxis 
                     dataKey="day" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 'bold'}}
+                    tick={{fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '700'}}
+                    dy={10}
                   />
                   <YAxis hide domain={['dataMin - 5000', 'dataMax + 5000']} />
                   <Tooltip content={<ChartTooltipContent />} />
@@ -429,6 +430,7 @@ export default function DashboardPage() {
                     strokeWidth={4}
                     fillOpacity={1} 
                     fill="url(#colorValueDashboard)" 
+                    animationDuration={1500}
                   />
                 </AreaChart>
               </ChartContainer>

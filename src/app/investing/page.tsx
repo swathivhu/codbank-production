@@ -136,17 +136,18 @@ export default function InvestingPage() {
                 <ChartContainer config={chartConfig}>
                   <AreaChart data={CHART_DATA}>
                     <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorValueInvesting" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
                     <XAxis 
                       dataKey="month" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 'bold'}}
+                      tick={{fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '700'}}
+                      dy={10}
                     />
                     <YAxis hide />
                     <Tooltip content={<ChartTooltipContent />} />
@@ -156,7 +157,8 @@ export default function InvestingPage() {
                       stroke="hsl(var(--accent))" 
                       strokeWidth={4}
                       fillOpacity={1} 
-                      fill="url(#colorValue)" 
+                      fill="url(#colorValueInvesting)" 
+                      animationDuration={1500}
                     />
                   </AreaChart>
                 </ChartContainer>
