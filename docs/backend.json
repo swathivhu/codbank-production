@@ -36,7 +36,7 @@
         },
         "balance": {
           "type": "number",
-          "description": "Current account balance in USD.",
+          "description": "Current total aggregated balance in USD.",
           "default": 100000
         },
         "createdAt": {
@@ -54,6 +54,35 @@
         "balance",
         "createdAt"
       ]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a specific financial account (Savings/Checking) owned by a user.",
+      "properties": {
+        "accountNumber": {
+          "type": "string",
+          "description": "Unique 10-digit account number."
+        },
+        "accountType": {
+          "type": "string",
+          "enum": ["Savings", "Current"]
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance of this specific account."
+        },
+        "status": {
+          "type": "string",
+          "default": "ACTIVE"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["accountNumber", "accountType", "balance", "status", "createdAt"]
     },
     "UserToken": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -112,6 +141,16 @@
         }
       },
       {
+        "path": "/codusers/{userId}/accounts/{accountId}",
+        "definition": {
+          "entityName": "Account",
+          "schema": {
+            "$ref": "#/backend/entities/Account"
+          },
+          "description": "Subcollection for specific bank accounts owned by the user."
+        }
+      },
+      {
         "path": "/codusers/{userId}/userTokens/{tokenId}",
         "definition": {
           "entityName": "UserToken",
@@ -121,7 +160,6 @@
           "description": "Subcollection for user-specific tokens. Nested for path-based security."
         }
       }
-    ],
-    "reasoning": "The structure uses a nested subcollection for tokens. This is a Firestore best practice for user-owned data because it allows for simple path-based security rules (ensuring a user can only see their own tokens) without needing expensive cross-document lookups."
+    ]
   }
 }

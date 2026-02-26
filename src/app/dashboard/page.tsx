@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,15 +20,17 @@ import {
   LogOut,
   User,
   Settings,
-  CreditCard
+  CreditCard,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { useFirebase, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, getDoc, collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +42,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function DashboardPage() {
   const { user, isUserLoading, auth, firestore } = useFirebase();
@@ -48,6 +69,21 @@ export default function DashboardPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  
+  // Create Account State
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [accountType, setAccountType] = useState<'Savings' | 'Current'>('Savings');
+  const [initialDeposit, setInitialDeposit] = useState('1000');
+  const [isConfirmed, setIsConfirmed] = useState(false);
+
+  // Fetch accounts collection
+  const accountsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, 'codusers', user.uid, 'accounts');
+  }, [firestore, user]);
+
+  const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsQuery);
 
   // Initial fetch of profile
   useEffect(() => {
@@ -79,9 +115,7 @@ export default function DashboardPage() {
     
     setIsFetching(true);
     try {
-      // Simulate API call delay for "modern" feel
       await new Promise(resolve => setTimeout(resolve, 800));
-      
       const docRef = doc(firestore, 'codusers', user.uid);
       const snap = await getDoc(docRef);
       
@@ -89,7 +123,6 @@ export default function DashboardPage() {
         const newBalance = snap.data().balance;
         setBalance(newBalance);
         
-        // Celebration!
         confetti({
           particleCount: 150,
           spread: 70,
@@ -115,13 +148,70 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (!user || !firestore) return;
+    if (parseInt(initialDeposit) < 1000) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Deposit",
+        description: "Initial deposit must be at least $1,000.",
+      });
+      return;
+    }
+    if (!isConfirmed) {
+      toast({
+        variant: "destructive",
+        title: "Action Required",
+        description: "Please confirm the terms to open a new account.",
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      // Generate a 10-digit account number
+      const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+      
+      const accountsRef = collection(firestore, 'codusers', user.uid, 'accounts');
+      await addDoc(accountsRef, {
+        accountNumber,
+        accountType,
+        balance: parseFloat(initialDeposit),
+        status: 'ACTIVE',
+        createdAt: serverTimestamp(),
+      });
+
+      toast({
+        title: "Account Created Successfully",
+        description: `Your new ${accountType} account (${accountNumber}) is ready.`,
+      });
+      
+      setIsCreateDialogOpen(false);
+      // Reset form
+      setAccountType('Savings');
+      setInitialDeposit('1000');
+      setIsConfirmed(false);
+      
+      confetti({
+        particleCount: 100,
+        spread: 60,
+        colors: ['#5cd6c1', '#ffffff']
+      });
+
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Creation Failed",
+        description: "Could not create account. Please try again.",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      toast({
-        title: "Logged Out",
-        description: "Your secure session has been terminated.",
-      });
       router.push('/login');
     } catch (error) {
       toast({
@@ -205,11 +295,12 @@ export default function DashboardPage() {
 
         {/* Account Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          <Card className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative col-span-1 md:col-span-2 lg:col-span-1">
+          {/* Main Balance Card */}
+          <Card className="bg-card border-white/5 hover:border-accent/10 transition-all overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center mb-2">
-                <Badge variant="secondary" className="bg-primary/20 text-accent border-none">Main Account</Badge>
+                <Badge variant="secondary" className="bg-primary/20 text-accent border-none">Total Wealth</Badge>
                 <Wallet className="w-4 h-4 text-accent" />
               </div>
               <CardTitle className="text-4xl font-headline font-bold flex items-baseline gap-2">
@@ -220,7 +311,7 @@ export default function DashboardPage() {
                 )}
               </CardTitle>
               <CardDescription className="font-mono text-xs tracking-widest uppercase">
-                Active Balance
+                Aggregated Balance
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -235,7 +326,7 @@ export default function DashboardPage() {
                   ) : (
                     <Trophy className="w-4 h-4 mr-2" />
                   )}
-                  Check Balance
+                  Refresh
                 </Button>
                 <Button variant="outline" className="flex-1 border-white/10 hover:bg-white/5">
                   Transfer
@@ -244,31 +335,110 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
-          <Card className="bg-card border-white/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-headline">Monthly Spending</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-4">$3,240.00</div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                  <span>Limit: $5,000.00</span>
-                  <span className="text-accent">65%</span>
+          {/* Dynamic Accounts List */}
+          {accounts && accounts.length > 0 ? (
+            accounts.slice(0, 1).map((acc) => (
+              <Card key={acc.id} className="bg-card border-white/5">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <Badge variant="outline" className="text-accent border-accent/20">{acc.accountType} Account</Badge>
+                    <span className="text-[10px] font-mono text-muted-foreground">#{acc.accountNumber}</span>
+                  </div>
+                  <CardTitle className="text-2xl font-bold font-headline">
+                    ${acc.balance.toLocaleString()}
+                  </CardTitle>
+                  <CardDescription>Available Balance</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="flex items-center gap-2 text-xs text-accent">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Active & Verified</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : isAccountsLoading ? (
+            <Card className="bg-card border-white/5 flex items-center justify-center h-full min-h-[180px]">
+              <Loader2 className="w-6 h-6 animate-spin text-accent" />
+            </Card>
+          ) : (
+            <Card className="bg-card border-white/5 border-dashed flex flex-col items-center justify-center p-6 text-center">
+              <AlertCircle className="w-8 h-8 text-muted-foreground mb-2" />
+              <p className="text-sm font-medium">No secondary accounts</p>
+              <p className="text-xs text-muted-foreground">Open one to manage your savings.</p>
+            </Card>
+          )}
+
+          {/* Create New Account Button/Dialog */}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <div className="border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 hover:border-accent/20 transition-all cursor-pointer group">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Plus className="w-6 h-6 text-accent" />
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-accent w-[65%] rounded-full"></div>
+                <span className="font-headline font-semibold">Create New Account</span>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-white/10 text-foreground">
+              <DialogHeader>
+                <DialogTitle className="font-headline text-2xl">Open New Account</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Expand your financial reach with a new secure account.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Account Type</Label>
+                  <Select value={accountType} onValueChange={(v: any) => setAccountType(v)}>
+                    <SelectTrigger className="bg-background border-white/10">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-white/10">
+                      <SelectItem value="Savings">Savings Account</SelectItem>
+                      <SelectItem value="Current">Current Account</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deposit">Initial Deposit ($)</Label>
+                  <Input 
+                    id="deposit" 
+                    type="number" 
+                    min="1000"
+                    value={initialDeposit} 
+                    onChange={(e) => setInitialDeposit(e.target.value)}
+                    className="bg-background border-white/10"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Minimum deposit: $1,000.00</p>
+                </div>
+                <div className="flex items-start space-x-2 pt-2">
+                  <Checkbox 
+                    id="confirm" 
+                    checked={isConfirmed} 
+                    onCheckedChange={(v: any) => setIsConfirmed(v)}
+                    className="border-white/20 mt-1"
+                  />
+                  <Label htmlFor="confirm" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                    I confirm that I have read and agree to the CodBank Terms of Service and Electronic Funds Transfer Agreement.
+                  </Label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <div className="border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 hover:border-accent/20 transition-all cursor-pointer group">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-accent" />
-            </div>
-            <span className="font-headline font-semibold">Open New Account</span>
-          </div>
+              <DialogFooter>
+                <Button 
+                  onClick={handleCreateAccount} 
+                  disabled={isCreating}
+                  className="w-full bg-accent hover:bg-accent/90 text-background font-bold h-11"
+                >
+                  {isCreating ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
+                  Create Secure Account
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -332,20 +502,32 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Sidebar Insights */}
+          {/* Sidebar - Accounts Summary List */}
           <div className="space-y-6">
-            <h2 className="text-xl font-bold font-headline">Insights</h2>
-            <div className="bg-card border border-white/5 p-6 rounded-2xl">
-              <h3 className="font-headline font-bold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-accent" />
-                Savings Progress
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                You've saved <span className="text-accent font-bold">$450.00</span> more this month compared to February. You're in the top 5% of savers!
-              </p>
-              <div className="p-4 rounded-xl bg-background/50 border border-white/5">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-tighter">Projected Balance (Dec)</p>
-                <p className="text-2xl font-bold font-headline">$62,400.00</p>
+            <h2 className="text-xl font-bold font-headline">Your Accounts</h2>
+            <div className="bg-card border border-white/5 p-6 rounded-2xl space-y-4">
+              {accounts && accounts.length > 0 ? (
+                accounts.map(acc => (
+                  <div key={acc.id} className="flex justify-between items-center p-3 rounded-xl bg-background/50 border border-white/5">
+                    <div>
+                      <p className="text-sm font-bold font-headline">{acc.accountType}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground">**** {acc.accountNumber.slice(-4)}</p>
+                    </div>
+                    <p className="font-bold text-accent">${acc.balance.toLocaleString()}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No accounts found.</p>
+              )}
+              
+              <div className="pt-4 mt-4 border-t border-white/5">
+                <h3 className="font-headline font-bold mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-accent" />
+                  Savings Insights
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  You've opened <span className="text-accent font-bold">{accounts?.length || 0}</span> accounts this session. You're building a diverse portfolio!
+                </p>
               </div>
             </div>
           </div>
