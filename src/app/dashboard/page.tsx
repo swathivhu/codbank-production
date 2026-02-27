@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,8 +16,6 @@ import {
   LogOut,
   User,
   Settings,
-  CreditCard,
-  CheckCircle2,
   ShieldCheck,
   Copy,
   Zap,
@@ -24,7 +23,7 @@ import {
   Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -59,7 +58,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 const CHART_DATA = [
@@ -101,7 +100,7 @@ export default function DashboardPage() {
     return collection(firestore, 'codusers', user.uid, 'accounts');
   }, [firestore, user]);
 
-  const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsQuery);
+  const { data: accounts } = useCollection(accountsQuery);
 
   useEffect(() => {
     setMounted(true);
@@ -118,37 +117,42 @@ export default function DashboardPage() {
           const docRef = doc(firestore, 'codusers', user.uid);
           const snap = await getDoc(docRef);
           if (snap.exists()) {
-            setProfile(snap.data());
-            setBalance(snap.data().balance);
+            const data = snap.data();
+            setProfile(data);
+            setBalance(data.balance ?? 0);
           }
-        } catch (error) {}
+        } catch (error) {
+          console.error("Dashboard init error:", error);
+        }
       }
     };
 
-    if (user && firestore) {
+    if (user && firestore && mounted) {
       fetchInitialData();
     }
   }, [user, isUserLoading, firestore, router, mounted]);
 
   const handleCheckBalance = async () => {
-    if (!user || !firestore) return;
+    if (!user) return;
     setIsFetching(true);
     try {
-      const docRef = doc(firestore, 'codusers', user.uid);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const newBalance = snap.data().balance;
-        setBalance(newBalance);
+      const response = await fetch('/api/dashboard/balance');
+      const data = await response.json();
+      
+      if (response.ok && data.balance !== undefined) {
+        setBalance(data.balance);
         confetti({
           particleCount: 200,
           spread: 80,
           origin: { y: 0.6 },
           colors: ['#5cd6c1', '#ffffff', '#10b981'],
         });
-        toast({ title: "Vault Synced", description: `Available liquidity: $${newBalance.toLocaleString()}.` });
+        toast({ title: "Vault Synced", description: `Available liquidity: $${data.balance.toLocaleString()}.` });
+      } else {
+        throw new Error(data.error || 'Sync failed');
       }
-    } catch (error) {
-      toast({ variant: "destructive", title: "Sync Failed", description: "Security service heartbeat lost." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Sync Failed", description: error.message || "Security service heartbeat lost." });
     } finally {
       setIsFetching(false);
     }
@@ -197,13 +201,13 @@ export default function DashboardPage() {
   const onDialogChange = (open: boolean) => {
     setIsCreateDialogOpen(open);
     if (!open) {
-      // Delay reset for transition
       setTimeout(resetDialog, 300);
     }
   };
 
   const handleLogout = async () => {
     try {
+      await fetch('/api/auth/session', { method: 'POST', body: JSON.stringify({ action: 'logout' }) });
       await signOut(auth);
       router.push('/login');
     } catch (error) {
@@ -229,7 +233,6 @@ export default function DashboardPage() {
       <DashboardNav />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Modern Top Header */}
         <header className="h-24 border-b border-white/[0.03] flex items-center justify-between px-10 bg-card/10 backdrop-blur-3xl z-20">
           <div className="flex items-center gap-6">
             <h2 className="text-2xl font-headline font-black tracking-tight">System Overview</h2>
@@ -288,36 +291,33 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Dynamic Main Stage */}
         <main className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-          
-          {/* Liquidity Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="glass-card rounded-[2rem] relative overflow-hidden group">
               <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Total Liquidity</p>
-                <Wallet className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Total Liquidity</p>
+                  <Wallet className="h-5 w-5 text-accent" />
+                </div>
                 <div className="text-4xl font-headline font-black mb-3 tracking-tighter">
                   {balance !== null ? `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••'}
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className="bg-accent/10 text-accent border-none font-black text-[9px] uppercase">+2.4% Vol</Badge>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-accent/10 text-accent transition-transform hover:rotate-45" onClick={handleCheckBalance}>
-                    <Zap className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-accent/10 text-accent transition-transform hover:rotate-45" onClick={handleCheckBalance} disabled={isFetching}>
+                    {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </Card>
 
             <Card className="glass-card rounded-[2rem] group">
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Active Instances</p>
-                <Activity className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Active Instances</p>
+                  <Activity className="h-5 w-5 text-accent" />
+                </div>
                 <div className="text-4xl font-headline font-black mb-3 tracking-tighter">{accounts?.length || 0}</div>
                 <Dialog open={isCreateDialogOpen} onOpenChange={onDialogChange}>
                   <DialogTrigger asChild>
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                     ) : (
                       <div className="py-10 flex flex-col items-center text-center space-y-8 animate-page-entry">
                         <div className="w-28 h-28 rounded-[2.5rem] bg-accent/10 flex items-center justify-center border border-accent/20 shadow-[0_0_60px_rgba(92,214,193,0.15)]">
-                          <CheckCircle2 className="w-14 h-14 text-accent" />
+                          <Activity className="w-14 h-14 text-accent" />
                         </div>
                         <div className="space-y-2">
                           <h2 className="text-4xl font-black font-headline tracking-tighter">Vault Initialized</h2>
@@ -387,24 +387,23 @@ export default function DashboardPage() {
                     )}
                   </DialogContent>
                 </Dialog>
-              </CardContent>
+              </div>
             </Card>
 
             <Card className="glass-card rounded-[2rem]">
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Portfolio Performance</p>
-                <TrendingUp className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Portfolio Performance</p>
+                  <TrendingUp className="h-5 w-5 text-accent" />
+                </div>
                 <div className="text-4xl font-headline font-black mb-3 tracking-tighter">$128,400.20</div>
                 <div className="text-[10px] font-black text-accent uppercase tracking-widest flex items-center gap-2">
                   <ArrowUpRight className="w-3.5 h-3.5" /> +12.5% Month-over-Month
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </div>
 
-          {/* Performance Analytics */}
           <Card className="glass-card rounded-[2.5rem] p-10 border-white/[0.03]">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
               <div className="space-y-2">
@@ -420,39 +419,40 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="h-[350px] w-full">
-              <ChartContainer config={chartConfig}>
-                <AreaChart data={CHART_DATA}>
-                  <defs>
-                    <linearGradient id="colorValueDashboard" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                  <XAxis 
-                    dataKey="day" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '900', letterSpacing: '0.1em'}}
-                    dy={20}
-                  />
-                  <YAxis hide domain={['dataMin - 5000', 'dataMax + 5000']} />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="hsl(var(--accent))" 
-                    strokeWidth={5}
-                    fillOpacity={1} 
-                    fill="url(#colorValueDashboard)" 
-                    animationDuration={2000}
-                  />
-                </AreaChart>
-              </ChartContainer>
+              {mounted && (
+                <ChartContainer config={chartConfig}>
+                  <AreaChart data={CHART_DATA}>
+                    <defs>
+                      <linearGradient id="colorValueDashboard" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '900', letterSpacing: '0.1em'}}
+                      dy={20}
+                    />
+                    <YAxis hide domain={['dataMin - 5000', 'dataMax + 5000']} />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="hsl(var(--accent))" 
+                      strokeWidth={5}
+                      fillOpacity={1} 
+                      fill="url(#colorValueDashboard)" 
+                      animationDuration={2000}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              )}
             </div>
           </Card>
 
-          {/* Transaction Ledger */}
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-2xl font-headline font-black tracking-tight">Recent Activity Ledger</h3>
