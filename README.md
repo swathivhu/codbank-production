@@ -5,6 +5,11 @@
 
 ---
 
+## PROJECT IMAGE URL
+https://raw.githubusercontent.com/swathivhu/codbank-production/main/CodBank.png
+
+---
+
 ## 🌐 Live Demo
 🔗 https://codbank-production.vercel.app  
 
